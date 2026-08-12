@@ -1,0 +1,4 @@
+sistema_grafica.db
+*.db
+*.sqlite
+*.sqlite3
