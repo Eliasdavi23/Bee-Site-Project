@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Executivo - Sistema da Empresa{% endblock %}
+
+{% block content %}
+<div class="p-8 space-y-8 bg-slate-950 w-full min-h-screen text-slate-100 pb-16">
+
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-800 pb-4 gap-4">
+        <div>
+            <h1 class="text-3xl font-black text-amber-400 tracking-wide flex items-center gap-3">
+                📊 DASHBOARD EXECUTIVO
+            </h1>
+            <p class="text-sm text-slate-400 mt-1">Visão geral de desempenho, vendas e linha de produção em tempo real.</p>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap w-full md:w-auto justify-end">
+            <select id="dash-filtro-periodo" onchange="toggleDataInputDashboard()" class="h-11 min-w-[180px] w-full sm:w-auto bg-slate-900 border border-slate-700 text-slate-200 text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:border-amber-400 transition cursor-pointer">
+                <option value="mes_atual" selected>Este Mês</option>
+                <option value="mes_anterior">Mês Anterior</option>
+                <option value="7_dias">Últimos 7 Dias</option>
+                <option value="ano">Ano Atual</option>
+                <option value="dia_especifico">Dia Específico</option>
+            </select>
+
+            <input type="date" id="dash-data-especifica" class="hidden h-11 min-w-[180px] w-full sm:w-auto bg-slate-900 border border-slate-700 text-slate-200 text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:border-amber-400 transition" />
+
+            <button onclick="atualizarDashboard()" class="h-11 min-w-[140px] justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-4 py-2.5 rounded-xl border border-slate-700 transition flex items-center gap-2">
+                🔄 Atualizar
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl relative overflow-hidden shadow-xl">
+            <div class="flex justify-between items-start">
+                <div>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Faturamento Total</span>
+                    <p id="dash-faturamento" class="text-3xl font-black text-emerald-400 mt-1">R$ 0,00</p>
+                </div>
+                <div class="p-3 bg-emerald-950/60 border border-emerald-800/50 rounded-xl text-emerald-400 text-xl">
+                    💰
+                </div>
+            </div>
+            <p class="text-xs text-slate-500 mt-3 flex items-center gap-1">
+                <span class="text-emerald-400 font-bold">●</span> Total de pedidos gerados no período
+            </p>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl relative overflow-hidden shadow-xl">
+            <div class="flex justify-between items-start">
+                <div>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pedidos Realizados</span>
+                    <p id="dash-total-pedidos" class="text-3xl font-black text-amber-400 mt-1">0</p>
+                </div>
+                <div class="p-3 bg-amber-950/60 border border-amber-800/50 rounded-xl text-amber-400 text-xl">
+                    📦
+                </div>
+            </div>
+            <p class="text-xs text-slate-500 mt-3 flex items-center gap-1">
+                <span id="dash-ticket-medio" class="text-amber-400 font-bold">R$ 0,00</span> Ticket Média / Pedido
+            </p>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl relative overflow-hidden shadow-xl">
+            <div class="flex justify-between items-start">
+                <div>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Fila de Produção</span>
+                    <p id="dash-em-producao" class="text-3xl font-black text-blue-400 mt-1">0</p>
+                </div>
+                <div class="p-3 bg-blue-950/60 border border-blue-800/50 rounded-xl text-blue-400 text-xl">
+                    ⚙️
+                </div>
+            </div>
+            <p class="text-xs text-slate-500 mt-3 flex items-center gap-1">
+                Pedidos em produção ou aguardando
+            </p>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl relative overflow-hidden shadow-xl">
+            <div class="flex justify-between items-start">
+                <div>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Saldo Pendente</span>
+                    <p id="dash-a-receber" class="text-3xl font-black text-rose-400 mt-1">R$ 0,00</p>
+                </div>
+                <div class="p-3 bg-rose-950/60 border border-rose-800/50 rounded-xl text-rose-400 text-xl">
+                    ⚠️
+                </div>
+            </div>
+            <p class="text-xs text-slate-500 mt-3 flex items-center gap-1">
+                Valores a receber de clientes
+            </p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <div class="lg:col-span-2 bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-6 shadow-xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h2 class="text-lg font-bold text-slate-200">💳 Distribuição por Recebimento</h2>
+                <span class="text-xs bg-slate-800 text-slate-400 px-3 py-1 rounded-full border border-slate-700">Formas de Pagamento</span>
+            </div>
+
+            <div id="container-pagamentos-progresso" class="space-y-4">
+            </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-6 shadow-xl">
+            <div class="border-b border-slate-800 pb-3">
+                <h2 class="text-lg font-bold text-slate-200">🏆 Destaques do Mês</h2>
+            </div>
+
+            <div>
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Top Atendentes</h3>
+                <div id="list-top-atendentes" class="space-y-3">
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-800/80">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Produtos Mais Vendidos</h3>
+                <div id="list-top-produtos" class="space-y-3">
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl">
+            <div class="flex justify-between items-center">
+                <h2 class="text-lg font-bold text-slate-200">🕒 Últimos Pedidos</h2>
+                <a href="/pedidos" class="text-xs text-amber-400 hover:underline font-bold">Ver todos →</a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="bg-slate-950 text-slate-400 uppercase text-xs">
+                        <tr>
+                            <th class="p-3">Cód.</th>
+                            <th class="p-3">Cliente</th>
+                            <th class="p-3">Total</th>
+                            <th class="p-3 text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-dash-pedidos" class="divide-y divide-slate-800">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h2 class="text-lg font-bold text-slate-200 flex items-center gap-2">
+                    ⚙️ Status da Produção
+                </h2>
+                <a href="/pedidos" class="text-xs text-amber-400 hover:underline font-bold">Gerenciar Fila →</a>
+            </div>
+            
+            <div id="container-status-producao" class="space-y-3 pt-2">
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script type="module" src="/static/js/dashboard.js?v=2026"></script>
+{% endblock %}

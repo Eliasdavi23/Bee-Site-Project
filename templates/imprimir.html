@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block title %}Impressão de Orçamento - Sistema da Empresa{% endblock %}
+
+{% block content %}
+<style>
+html, body {
+    overflow-x: hidden !important;
+    max-width: 100vw;
+}
+
+body {
+    background: #020617 !important;
+}
+
+#print-page {
+    overflow-x: hidden;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.layout-modelo {
+    display: none;
+}
+
+.layout-modelo.ativo {
+    display: block;
+}
+
+/* ==========================================
+   ESTILO DE TELA (PREVIEW CUPOM 80mm / TM-T20)
+   ========================================== */
+#layout-cupom {
+    width: 72mm; /* Área útil real de impressão */
+    max-width: 100%;
+    padding: 8px 4px;
+    font-size: 11px;
+    line-height: 1.3;
+    font-family: Arial, Helvetica, sans-serif; /* Fonte legível para impressora térmica */
+    font-weight: 600; /* Letra mais encorpada/aparente */
+    box-sizing: border-box;
+}
+
+#layout-os,
+#layout-orcamento {
+    width: 210mm;
+    min-height: 297mm;
+    max-width: 100%;
+    padding: 16mm;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+/* ==========================================
+   CONFIGURAÇÃO DE IMPRESSÃO (PRINT)
+   ========================================== */
+@media print {
+    @page {
+        size: auto; /* Permite bobina contínua na TM-T20 */
+        margin: 0mm; /* Zera margens do navegador */
+    }
+
+    html, body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        height: auto !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+
+    .print\:hidden, nav, header, aside, #painel-botoes-modelo {
+        display: none !important;
+    }
+
+    .layout-modelo {
+        display: none !important;
+    }
+
+    .layout-modelo.ativo {
+        display: block !important;
+    }
+
+    #layout-cupom,
+    #layout-os,
+    #layout-orcamento {
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        margin: 0 auto !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+    }
+
+    /* AJUSTE ESPECÍFICO DE VISIBILIDADE PARA IMPRESSORA TÉRMICA (TM-T20) */
+    #layout-cupom {
+        width: 72mm !important;
+        padding: 2mm 1mm !important;
+        font-size: 11px !important;
+        line-height: 1.25 !important;
+        font-family: Arial, Helvetica, sans-serif !important;
+        font-weight: 700 !important; /* Força negrito/alta visibilidade térmico */
+        word-break: break-words;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    #layout-os,
+    #layout-orcamento {
+        width: 210mm !important;
+        min-height: 297mm !important;
+        padding: 12mm !important;
+        box-sizing: border-box !important;
+    }
+
+    div, span, p, h2, h3, th, td, strong {
+        color: #000000 !important;
+    }
+}
+</style>
+
+<div id="print-page" class="p-8 print:p-0 print:bg-white print:text-black space-y-8 bg-slate-950 w-full min-h-screen text-slate-100 pb-16 overflow-x-hidden">
+
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-800 pb-4 gap-4 print:hidden">
+        <div>
+            <h1 class="text-3xl font-black text-amber-400 tracking-wide flex items-center gap-3">
+                🖨️ CENTRAL DE IMPRESSÃO
+            </h1>
+            <p class="text-sm text-slate-400 mt-1">Visualização e impressão do documento #<span id="lbl-id-topo">{{ pedido_id or '-' }}</span></p>
+        </div>
+
+        <div class="flex gap-3 flex-wrap">
+            <a href="/pedidos" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-4 py-2.5 rounded-xl transition cursor-pointer">
+                ⬅️ Voltar aos Pedidos
+            </a>
+            <button onclick="validarEImprimir()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-5 py-2.5 rounded-xl transition flex items-center gap-2 shadow-lg shadow-amber-400/10 cursor-pointer">
+                🖨️ Imprimir Agora
+            </button>
+        </div>
+    </div>
+
+    <div id="painel-botoes-modelo" class="flex flex-wrap gap-3 print:hidden">
+        <button type="button" onclick="alternarModelo('cupom')" id="btn-cupom" class="px-4 py-2 rounded-xl text-xs font-bold bg-amber-400 text-slate-950 transition cursor-pointer">
+            🧾 Cupom (80mm)
+        </button>
+        <button type="button" onclick="alternarModelo('os')" id="btn-os" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 transition cursor-pointer">
+            📋 Ordem de Serviço
+        </button>
+        <button type="button" onclick="alternarModelo('orcamento')" id="btn-orcamento" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 transition cursor-pointer">
+            📝 Orçamento
+        </button>
+    </div>
+
+    <div class="flex justify-center">
+
+        <div id="layout-cupom" class="layout-modelo bg-white text-slate-950 rounded-lg shadow-2xl font-bold text-[11px] space-y-2">
+            <div class="text-center border-b-2 border-black pb-2 space-y-0.5">
+                <h2 class="font-black text-sm uppercase tracking-tight">SISTEMA GRAFICA</h2>
+                <p class="text-[10px] font-bold uppercase">Comprovante de Venda</p>
+            </div>
+
+            <div class="border-b border-black pb-2 space-y-1">
+                <p class="text-xs font-black">PEDIDO #<span id="c-id">-</span></p>
+                <p>Data: <span id="c-data">-</span></p>
+                <p class="truncate">Cliente: <span id="c-cliente">-</span></p>
+                <p class="truncate">Atendente: <span id="c-atendente">-</span></p>
+            </div>
+
+            <div class="border-b border-black pb-2">
+                <p class="font-black text-xs mb-1">ITENS:</p>
+                <div id="c-itens" class="space-y-1.5 font-bold"></div>
+            </div>
+
+            <div class="space-y-1 border-b-2 border-black pb-2">
+                <div class="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span id="c-subtotal">R$ 0,00</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Desconto:</span>
+                    <span id="c-desconto">R$ 0,00</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Valor Pago:</span>
+                    <span id="c-valor-pago">R$ 0,00</span>
+                </div>
+                <div class="flex justify-between font-black text-sm pt-1 border-t border-black">
+                    <span>TOTAL:</span>
+                    <span id="c-total">R$ 0,00</span>
+                </div>
+            </div>
+
+            <div class="space-y-0.5 pb-1 text-[10px] font-bold">
+                <p><strong>Produção:</strong> <span id="c-producao">-</span></p>
+                <p><strong>Pagamento:</strong> <span id="c-pagamento">-</span> (<span id="c-formapag">-</span>)</p>
+            </div>
+
+            <div class="text-center pt-2 border-t border-black text-[10px] font-bold">
+                <p>Obrigado pela preferência!</p>
+            </div>
+        </div>
+
+        <div id="layout-os" class="layout-modelo bg-white text-slate-950 p-8 rounded-2xl shadow-2xl font-sans text-sm space-y-6">
+            <div class="flex justify-between items-start border-b-2 border-slate-900 pb-4">
+                <div>
+                    <h2 class="text-2xl font-black uppercase tracking-wider">ORDEM DE SERVIÇO</h2>
+                    <p class="text-xs text-slate-600">Controle Interno e Produção Gráfica</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-xl font-bold text-amber-600">Nº <span id="os-id">-</span></p>
+                    <p class="text-xs text-slate-600">Data: <span id="os-data">-</span></p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 bg-slate-100 p-4 rounded-xl border border-slate-300">
+                <div>
+                    <p class="text-xs font-bold text-slate-500 uppercase">Dados do Cliente</p>
+                    <p class="font-bold text-base" id="os-cliente">-</p>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-slate-500 uppercase">Informações do Documento</p>
+                    <p class="text-xs"><strong>Atendente:</strong> <span id="os-atendente">-</span></p>
+                    <p class="text-xs"><strong>Forma Pagto:</strong> <span id="os-formapag">-</span></p>
+                    <p class="text-xs"><strong>Status Pagto:</strong> <span id="os-pagamento">-</span></p>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="font-bold text-xs uppercase text-slate-500 mb-2">Relação de Produtos / Serviços</h3>
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b-2 border-slate-300 text-xs text-slate-600">
+                            <th class="py-2">Qtd</th>
+                            <th class="py-2">Descrição</th>
+                            <th class="py-2 text-right">Preço Unit.</th>
+                            <th class="py-2 text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="os-itens" class="divide-y divide-slate-200 text-xs"></tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-between items-end border-t border-slate-300 pt-4">
+                <div class="w-1/2 space-y-1">
+                    <p class="text-xs font-bold text-slate-500 uppercase">Observações:</p>
+                    <p class="text-xs bg-slate-50 p-3 rounded-lg border border-slate-200 min-h-[60px]" id="os-obs">-</p>
+                </div>
+                <div class="w-1/3 text-right space-y-1">
+                    <div class="flex justify-between text-xs">
+                        <span>Subtotal:</span>
+                        <span id="os-subtotal">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span>Desconto:</span>
+                        <span id="os-desconto">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span>Pago:</span>
+                        <span id="os-valor-pago">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between font-bold text-base border-t border-slate-300 pt-1">
+                        <span>Total Geral:</span>
+                        <span id="os-total" class="text-amber-600">R$ 0,00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-8 pt-12 text-center text-xs">
+                <div class="border-t border-slate-400 pt-1 font-medium text-slate-600">
+                    Assinatura do Responsável
+                </div>
+                <div class="border-t border-slate-400 pt-1 font-medium text-slate-600">
+                    Assinatura / Visto do Cliente
+                </div>
+            </div>
+        </div>
+
+        <div id="layout-orcamento" class="layout-modelo ativo bg-white text-slate-950 p-8 rounded-2xl shadow-2xl font-sans text-sm space-y-6">
+            <div class="flex justify-between items-start border-b-2 border-slate-900 pb-4">
+                <div>
+                    <h2 class="text-2xl font-black uppercase tracking-wider">ORÇAMENTO</h2>
+                    <p class="text-xs text-slate-600">Documento de proposta comercial</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-xl font-bold text-amber-600">Nº <span id="orc-id">-</span></p>
+                    <p class="text-xs text-slate-600">Data: <span id="orc-data">-</span></p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 bg-slate-100 p-4 rounded-xl border border-slate-300">
+                <div>
+                    <p class="text-xs font-bold text-slate-500 uppercase">Dados do Cliente</p>
+                    <p class="font-bold text-base" id="orc-cliente">-</p>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-slate-500 uppercase">Informações do Orçamento</p>
+                    <p class="text-xs"><strong>Atendente:</strong> <span id="orc-atendente">-</span></p>
+                    <p class="text-xs"><strong>Forma Pagto:</strong> <span id="orc-formapag">-</span></p>
+                    <p class="text-xs"><strong>Status Pagto:</strong> <span id="orc-pagamento">-</span></p>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="font-bold text-xs uppercase text-slate-500 mb-2">Relação de Produtos / Serviços</h3>
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b-2 border-slate-300 text-xs text-slate-600">
+                            <th class="py-2">Qtd</th>
+                            <th class="py-2">Descrição</th>
+                            <th class="py-2 text-right">Preço Unit.</th>
+                            <th class="py-2 text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orc-itens" class="divide-y divide-slate-200 text-xs"></tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-between items-end border-t border-slate-300 pt-4">
+                <div class="w-1/2 space-y-1">
+                    <p class="text-xs font-bold text-slate-500 uppercase">Observações:</p>
+                    <p class="text-xs bg-slate-50 p-3 rounded-lg border border-slate-200 min-h-[60px]" id="orc-obs">-</p>
+                </div>
+                <div class="w-1/3 text-right space-y-1">
+                    <div class="flex justify-between text-xs">
+                        <span>Subtotal:</span>
+                        <span id="orc-subtotal">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span>Desconto:</span>
+                        <span id="orc-desconto">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between text-xs">
+                        <span>Pago:</span>
+                        <span id="orc-valor-pago">R$ 0,00</span>
+                    </div>
+                    <div class="flex justify-between font-bold text-base border-t border-slate-300 pt-1">
+                        <span>Total Geral:</span>
+                        <span id="orc-total" class="text-amber-600">R$ 0,00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-8 pt-12 text-center text-xs">
+                <div class="border-t border-slate-400 pt-1 font-medium text-slate-600">
+                    Assinatura do Responsável
+                </div>
+                <div class="border-t border-slate-400 pt-1 font-medium text-slate-600">
+                    Assinatura / Visto do Cliente
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="/static/js/imprimir.js"></script>
+{% endblock %}
