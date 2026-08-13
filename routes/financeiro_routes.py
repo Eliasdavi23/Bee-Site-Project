@@ -30,6 +30,7 @@ class ContaPagarCreate(BaseModel):
     categoria: Optional[str] = "Geral"
     valor: float
     data_vencimento: str
+    recorrente: bool = False
 
 # ROTA DA PÁGINA
 @router.get("/financeiro", response_class=HTMLResponse)
@@ -58,7 +59,7 @@ def api_listar_contas_pagar(request: Request, data: str | None = None):
 @router.post("/api/financeiro/contas-pagar")
 def api_criar_conta_pagar(conta: ContaPagarCreate, request: Request):
     verificar_acesso_financeiro(request)
-    inserir_conta_pagar(conta.descricao, conta.categoria, conta.valor, conta.data_vencimento)
+    inserir_conta_pagar(conta.descricao, conta.categoria, conta.valor, conta.data_vencimento, conta.recorrente)
     return {"message": "Conta a pagar registrada com sucesso!"}
 
 @router.put("/api/financeiro/contas-pagar/{conta_id}/quitar")

@@ -110,7 +110,9 @@ def init_db():
             valor REAL NOT NULL,
             data_vencimento TEXT NOT NULL,
             status TEXT DEFAULT 'PENDENTE',
-            data_pagamento TEXT
+            data_pagamento TEXT,
+            recorrente INTEGER DEFAULT 0,
+            dia_vencimento INTEGER
         )
     """)
 
@@ -135,6 +137,13 @@ def init_db():
     if 'tipo' not in colunas_pedidos:
         cursor.execute("ALTER TABLE pedidos ADD COLUMN tipo TEXT DEFAULT 'VENDA'")
         cursor.execute("UPDATE pedidos SET tipo = 'VENDA' WHERE tipo IS NULL OR tipo = ''")
+
+    cursor.execute("PRAGMA table_info(contas_a_pagar)")
+    colunas_contas = [coluna[1] for coluna in cursor.fetchall()]
+    if 'recorrente' not in colunas_contas:
+        cursor.execute("ALTER TABLE contas_a_pagar ADD COLUMN recorrente INTEGER DEFAULT 0")
+    if 'dia_vencimento' not in colunas_contas:
+        cursor.execute("ALTER TABLE contas_a_pagar ADD COLUMN dia_vencimento INTEGER")
 
     cursor.execute("UPDATE pedidos SET usuario_nome = 'Thaissa' WHERE usuario_nome = 'Thaissa/Michel'")
 

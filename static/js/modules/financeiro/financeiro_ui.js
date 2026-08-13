@@ -39,7 +39,7 @@ export function renderizarContasPagar(contas) {
 
         tbody.innerHTML += `
             <tr class="hover:bg-slate-800/50 transition">
-                <td class="p-3 font-medium text-slate-200">${c.descricao} <br><span class="text-xs text-slate-500">${c.categoria || ''}</span></td>
+                <td class="p-3 font-medium text-slate-200">${c.descricao} <br><span class="text-xs text-slate-500">${c.categoria || ''}${c.recorrente ? ' · Mensal' : ''}</span></td>
                 <td class="p-3 text-slate-400">${c.data_vencimento}</td>
                 <td class="p-3 font-bold text-slate-100">${formatarMoeda(c.valor)}</td>
                 <td class="p-3 text-center">${badge}</td>

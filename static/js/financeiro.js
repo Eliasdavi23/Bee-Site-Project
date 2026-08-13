@@ -59,7 +59,8 @@ async function salvarContaPagar(e) {
         descricao: document.getElementById('cp-descricao')?.value,
         valor: parseFloat(document.getElementById('cp-valor')?.value) || 0,
         data_vencimento: document.getElementById('cp-vencimento')?.value,
-        categoria: document.getElementById('cp-categoria')?.value
+        categoria: document.getElementById('cp-categoria')?.value,
+        recorrente: document.getElementById('cp-recorrente')?.checked || false
     };
 
     const ok = await api.postContaPagar(payload);

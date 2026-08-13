@@ -1,4 +1,5 @@
-from datetime import datetime
+from calendar import monthrange
+from datetime import date, datetime
 from config.database import get_connection
 from services.periodo_service import construir_filtro_periodo
 
@@ -107,13 +108,14 @@ def buscar_contas_pagar(data_vencimento: str | None = None):
     conn.close()
     return contas
 
-def inserir_conta_pagar(descricao: str, categoria: str, valor: float, data_vencimento: str):
+def inserir_conta_pagar(descricao: str, categoria: str, valor: float, data_vencimento: str, recorrente: bool = False):
     conn = get_connection()
     cursor = conn.cursor()
+    dia_vencimento = datetime.strptime(data_vencimento, '%Y-%m-%d').day if recorrente else None
     cursor.execute("""
-        INSERT INTO contas_a_pagar (descricao, categoria, valor, data_vencimento, status)
-        VALUES (?, ?, ?, ?, 'PENDENTE')
-    """, (descricao, categoria, valor, data_vencimento))
+        INSERT INTO contas_a_pagar (descricao, categoria, valor, data_vencimento, status, recorrente, dia_vencimento)
+        VALUES (?, ?, ?, ?, 'PENDENTE', ?, ?)
+    """, (descricao, categoria, valor, data_vencimento, int(recorrente), dia_vencimento))
     conn.commit()
     conn.close()
 
@@ -121,13 +123,40 @@ def marcar_conta_paga(conta_id: int):
     conn = get_connection()
     cursor = conn.cursor()
     hoje = datetime.now().strftime('%Y-%m-%d')
+
+    cursor.execute("SELECT * FROM contas_a_pagar WHERE id = ?", (conta_id,))
+    conta = cursor.fetchone()
+    if not conta or conta['status'] == 'PAGO':
+        conn.close()
+        return False
+
     cursor.execute("""
         UPDATE contas_a_pagar 
         SET status = 'PAGO', data_pagamento = ? 
         WHERE id = ?
     """, (hoje, conta_id))
+
+    if conta['recorrente']:
+        vencimento_atual = datetime.strptime(conta['data_vencimento'][:10], '%Y-%m-%d').date()
+        proximo_mes = vencimento_atual.month % 12 + 1
+        proximo_ano = vencimento_atual.year + (1 if vencimento_atual.month == 12 else 0)
+        dia_preferido = conta['dia_vencimento'] or vencimento_atual.day
+        proximo_vencimento = date(
+            proximo_ano,
+            proximo_mes,
+            min(dia_preferido, monthrange(proximo_ano, proximo_mes)[1])
+        ).isoformat()
+
+        cursor.execute("""
+            INSERT INTO contas_a_pagar (descricao, categoria, valor, data_vencimento, status, recorrente, dia_vencimento)
+            VALUES (?, ?, ?, ?, 'PENDENTE', 1, ?)
+        """, (
+            conta['descricao'], conta['categoria'], conta['valor'], proximo_vencimento, dia_preferido
+        ))
+
     conn.commit()
     conn.close()
+    return True
 
 def deletar_conta_pagar(conta_id: int):
     conn = get_connection()
