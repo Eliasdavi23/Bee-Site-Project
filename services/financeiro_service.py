@@ -90,10 +90,19 @@ def obter_dados_resumo_financeiro(periodo: str = "mes_atual", data_especifica: s
         "saldo_previsto": total_recebido_mes + total_a_receber - (contas_a_pagar_pendentes + contas_a_pagar_pagas)
     }
 
-def buscar_contas_pagar():
+def buscar_contas_pagar(data_vencimento: str | None = None):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM contas_a_pagar ORDER BY status DESC, data_vencimento ASC")
+
+    if data_vencimento:
+        cursor.execute("""
+            SELECT * FROM contas_a_pagar
+            WHERE date(data_vencimento) = date(?)
+            ORDER BY status DESC, data_vencimento ASC
+        """, (data_vencimento,))
+    else:
+        cursor.execute("SELECT * FROM contas_a_pagar ORDER BY status DESC, data_vencimento ASC")
+
     contas = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return contas

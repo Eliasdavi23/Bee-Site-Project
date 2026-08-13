@@ -51,9 +51,9 @@ def api_resumo_financeiro(request: Request, periodo: str = "mes_atual", data: st
     return obter_dados_resumo_financeiro(periodo=periodo, data_especifica=data)
 
 @router.get("/api/financeiro/contas-pagar")
-def api_listar_contas_pagar(request: Request):
+def api_listar_contas_pagar(request: Request, data: str | None = None):
     verificar_acesso_financeiro(request)
-    return buscar_contas_pagar()
+    return buscar_contas_pagar(data_vencimento=data)
 
 @router.post("/api/financeiro/contas-pagar")
 def api_criar_conta_pagar(conta: ContaPagarCreate, request: Request):

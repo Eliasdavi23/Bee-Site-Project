@@ -12,8 +12,13 @@ export async function fetchResumoFinanceiro(periodo = 'mes_atual', dataEspecific
     return await res.json();
 }
 
-export async function fetchContasPagar() {
-    const res = await fetch('/api/financeiro/contas-pagar');
+export async function fetchContasPagar(dataEspecifica = null) {
+    const params = new URLSearchParams();
+    if (dataEspecifica) {
+        params.set('data', dataEspecifica);
+    }
+    const sufixo = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`/api/financeiro/contas-pagar${sufixo}`);
     if (!res.ok) throw new Error("Erro ao carregar contas a pagar.");
     return await res.json();
 }

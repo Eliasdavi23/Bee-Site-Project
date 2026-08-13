@@ -75,7 +75,13 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-4">
-            <h2 class="text-lg font-bold text-slate-200">🔴 Contas a Pagar</h2>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <h2 class="text-lg font-bold text-slate-200">🔴 Contas a Pagar</h2>
+                <div class="flex items-center gap-2">
+                    <input type="date" id="fin-data-contas" onchange="carregarContasPagar()" aria-label="Filtrar contas por vencimento" class="bg-slate-950 border border-slate-700 text-slate-200 text-xs rounded-xl px-3 py-2 outline-none focus:border-emerald-400">
+                    <button type="button" onclick="limparFiltroContasPagar()" class="px-3 py-2 rounded-xl border border-slate-700 text-xs font-bold text-slate-300 hover:bg-slate-800 transition">Todas</button>
+                </div>
+            </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm text-slate-300">
                     <thead class="bg-slate-950 text-slate-400 uppercase text-xs">

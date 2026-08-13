@@ -35,7 +35,8 @@ async function carregarFinanceiro() {
 
 async function carregarContasPagar() {
     try {
-        const contas = await api.fetchContasPagar();
+        const dataEspecifica = document.getElementById('fin-data-contas')?.value || null;
+        const contas = await api.fetchContasPagar(dataEspecifica);
         ui.renderizarContasPagar(contas);
     } catch (e) {
         console.error("Erro ao carregar contas a pagar:", e);
@@ -97,6 +98,12 @@ async function excluirConta(id) {
 // EXPOSIÇÃO GLOBAL (PONTE PARA O HTML)
 // ==========================================
 window.carregarFinanceiro = carregarFinanceiro;
+window.carregarContasPagar = carregarContasPagar;
+window.limparFiltroContasPagar = () => {
+    const input = document.getElementById('fin-data-contas');
+    if (input) input.value = '';
+    carregarContasPagar();
+};
 window.toggleDataInputFinanceiro = toggleDataInputFinanceiro;
 window.abrirModalNovaConta = ui.abrirModalNovaConta;
 window.fecharModalNovaConta = ui.fecharModalNovaConta;
