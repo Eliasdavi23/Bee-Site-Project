@@ -45,9 +45,8 @@ def init_db():
     usuarios_padrao = [
         ('Thaissa', '230605'),
         ('Michel', '230605'),
-        ('Gabriel', '230605'),
-        ('Davi', '230605'),
-        ('Marketing', '230605')
+        ('Davi', '080813'),
+        ('Marketing', '021206')
     ]
 
     nomes_permitidos = tuple([u[0] for u in usuarios_padrao])
