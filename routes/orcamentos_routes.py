@@ -41,12 +41,18 @@ def listar_orcamentos(user: str = Depends(auth_required)):
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT p.*, c.nome as cliente_nome 
-        FROM pedidos p 
-        LEFT JOIN clientes c ON p.cliente_id = c.id 
-        WHERE p.tipo = 'ORCAMENTO'
-        ORDER BY p.id DESC
-    """)
+    SELECT
+        p.*,
+        c.nome AS cliente_nome,
+        c.documento AS cliente_documento,
+        c.telefone AS cliente_telefone,
+        c.email AS cliente_email,
+        c.endereco AS cliente_endereco
+    FROM pedidos p
+    LEFT JOIN clientes c ON p.cliente_id = c.id
+    WHERE p.tipo = 'ORCAMENTO'
+    ORDER BY p.id DESC
+""")
     orcamentos = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return orcamentos

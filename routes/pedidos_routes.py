@@ -19,12 +19,18 @@ def listar_pedidos(user: str = Depends(auth_required)):
     cursor = conn.cursor()
     # FILTRO IMPORTANTE: Traz apenas pedidos que são do tipo 'VENDA' para o painel de vendas/dashboard
     cursor.execute("""
-        SELECT p.*, c.nome as cliente_nome 
-        FROM pedidos p 
-        LEFT JOIN clientes c ON p.cliente_id = c.id 
-        WHERE p.tipo = 'VENDA' OR p.tipo IS NULL OR p.tipo = ''
-        ORDER BY p.id DESC
-    """)
+        SELECT
+        p.*,
+        c.nome AS cliente_nome,
+        c.documento AS cliente_documento,
+        c.telefone AS cliente_telefone,
+        c.email AS cliente_email,
+        c.endereco AS cliente_endereco
+    FROM pedidos p
+    LEFT JOIN clientes c ON p.cliente_id = c.id
+    WHERE p.tipo = 'VENDA' OR p.tipo IS NULL OR p.tipo = ''
+    ORDER BY p.id DESC
+""")
     pedidos = [dict(row) for row in cursor.fetchall()]
     conn.close()
     return pedidos

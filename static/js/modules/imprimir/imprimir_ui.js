@@ -39,7 +39,11 @@ export function preencherDocumento(pedido, itens, tipoDocumento) {
     ['c', 'os', 'orc'].forEach(prefixo => {
         preencherTexto(`${prefixo}-id`, pedido.id);
         preencherTexto(`${prefixo}-data`, pedido.data || '-');
-        preencherTexto(`${prefixo}-cliente`, pedido.cliente_nome || 'Cliente');
+        preencherTexto(`${prefixo}-cliente`, pedido.cliente_nome || '');
+        preencherTexto(`${prefixo}-documento`, pedido.cliente_documento || '');
+        preencherTexto(`${prefixo}-telefone`, pedido.cliente_telefone || '');
+        preencherTexto(`${prefixo}-email`, pedido.cliente_email || '');
+        preencherTexto(`${prefixo}-endereco`, pedido.cliente_endereco || '');
         preencherTexto(`${prefixo}-atendente`, pedido.usuario_nome || pedido.atendente || 'Sistema');
         preencherTexto(`${prefixo}-formapag`, pedido.forma_pagamento || 'Não informada');
         preencherTexto(`${prefixo}-pagamento`, pedido.status_pagamento || '-');
