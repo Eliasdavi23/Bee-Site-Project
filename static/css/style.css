@@ -1,0 +1,453 @@
+/* ==========================================================================
+   BEE-SITE-PROJECT - SISTEMA DE GRÁFICA (100% LOCALHOST / OFFLINE-READY CSS)
+   Design Moderno + Menu de Navegação + Abas Fluidas + Isolamento de Impressão
+   ========================================================================== */
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    border-color: #1e293b;
+}
+
+:root {
+    --bg-950: #020617;
+    --bg-900: #0f172a;
+    --bg-850: #131c31;
+    --bg-800: #1e293b;
+    --border-800: #1e293b;
+    --border-700: #334155;
+    --text-100: #f1f5f9;
+    --text-200: #e2e8f0;
+    --text-300: #cbd5e1;
+    --text-400: #94a3b8;
+    --text-500: #64748b;
+    --amber-400: #fbbf24;
+    --amber-300: #fcd34d;
+    --amber-500: #f59e0b;
+    --emerald-400: #34d399;
+    --emerald-500: #10b981;
+    --emerald-600: #059669;
+    --rose-400: #fb7185;
+    --rose-500: #f43f5e;
+    --rose-600: #e11d48;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background-color: var(--bg-950);
+    color: var(--text-100);
+}
+
+/* ==========================================================================
+   SHELL DE NAVEGAÇÃO PRINCIPAL (SIDEBAR + TOPBAR ENTRE FUNCIONALIDADES)
+   ========================================================================== */
+.bee-app-shell {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background-color: var(--bg-950);
+}
+
+.bee-sidebar {
+    width: 250px;
+    background-color: var(--bg-900);
+    border-right: 1px solid var(--border-800);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100vh;
+    flex-shrink: 0;
+    z-index: 30;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35);
+}
+
+.bee-sidebar-top {
+    overflow-y: auto;
+}
+
+.bee-brand-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.1rem 1rem;
+    border-bottom: 1px solid var(--border-800);
+    background-color: rgba(2, 6, 23, 0.45);
+    text-decoration: none;
+}
+
+.bee-brand-logo {
+    width: 100%;
+    max-width: 155px;
+    height: auto;
+    object-fit: contain;
+    border-radius: 0.75rem;
+}
+
+.bee-brand-fallback {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.bee-nav-section-label {
+    padding: 1rem 1.25rem 0.4rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--text-500);
+    text-transform: uppercase;
+}
+
+.bee-sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.25rem 0.75rem 1rem;
+}
+
+.bee-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.95rem;
+    border-radius: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-300);
+    text-decoration: none;
+    transition: all 0.16s ease;
+    border: 1px solid transparent;
+}
+
+.bee-nav-link:hover {
+    background-color: var(--bg-800);
+    color: #ffffff;
+}
+
+.bee-nav-link.active {
+    background-color: var(--amber-400);
+    color: var(--bg-950);
+    font-weight: 800;
+    box-shadow: 0 4px 14px rgba(251, 191, 36, 0.22);
+}
+
+.bee-nav-link-financeiro {
+    color: var(--emerald-400);
+}
+
+.bee-nav-link-financeiro.active {
+    background-color: var(--emerald-500);
+    color: var(--bg-950);
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+}
+
+.bee-nav-icon {
+    font-size: 1.05rem;
+    line-height: 1;
+}
+
+.bee-sidebar-footer {
+    padding: 0.9rem 1rem;
+    border-top: 1px solid var(--border-800);
+    background-color: rgba(2, 6, 23, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.bee-main-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* Barra superior horizontal sempre visível para troca rápida de módulo */
+.bee-topbar {
+    background-color: rgba(15, 23, 42, 0.95);
+    border-bottom: 1px solid var(--border-800);
+    padding: 0.55rem 1.25rem;
+    flex-shrink: 0;
+    z-index: 25;
+}
+
+.bee-topbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.bee-topbar-brand {
+    display: none;
+    white-space: nowrap;
+}
+
+.bee-topbar-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    overflow-x: auto;
+    padding-bottom: 2px;
+}
+
+.bee-topnav-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: 0.65rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-300);
+    background-color: var(--bg-950);
+    border: 1px solid var(--border-800);
+    white-space: nowrap;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.bee-topnav-pill:hover {
+    background-color: var(--bg-800);
+    color: #ffffff;
+    border-color: var(--border-700);
+}
+
+.bee-topnav-pill.active {
+    background-color: var(--amber-400);
+    color: var(--bg-950);
+    border-color: var(--amber-400);
+    font-weight: 800;
+}
+
+.bee-topnav-pill-fin {
+    color: var(--emerald-400);
+}
+
+.bee-topnav-pill-fin.active {
+    background-color: var(--emerald-500);
+    color: var(--bg-950);
+    border-color: var(--emerald-500);
+}
+
+.bee-topbar-user {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    white-space: nowrap;
+}
+
+.bee-main-content {
+    flex: 1;
+    overflow-y: auto;
+    width: 100%;
+    background-color: var(--bg-950);
+}
+
+@media (max-width: 1023px) {
+    .bee-sidebar {
+        display: none;
+    }
+    .bee-topbar-brand {
+        display: block;
+    }
+}
+
+/* Scrollbar limpa */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #090d16;
+}
+::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+}
+
+/* ==========================================================================
+   SISTEMA DE ABAS DINÂMICAS E RESPONSIVAS INTERNAS (BEE-TABS)
+   ========================================================================== */
+.bee-tabs-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    background-color: rgba(15, 23, 42, 0.9);
+    border: 1px solid var(--border-800);
+    padding: 0.375rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.35);
+}
+
+.bee-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.15rem;
+    border-radius: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-400);
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+}
+
+.bee-tab-btn:hover {
+    color: var(--text-100);
+    background-color: rgba(30, 41, 59, 0.7);
+}
+
+.bee-tab-btn.active {
+    background-color: var(--amber-400);
+    color: var(--bg-950);
+    box-shadow: 0 4px 14px rgba(251, 191, 36, 0.25);
+}
+
+.bee-subtab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-400);
+    background-color: var(--bg-950);
+    border: 1px solid var(--border-800);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.bee-subtab-btn:hover {
+    color: var(--text-200);
+    border-color: var(--border-700);
+}
+
+.bee-subtab-btn.active {
+    background-color: rgba(251, 191, 36, 0.15);
+    color: var(--amber-400);
+    border-color: rgba(251, 191, 36, 0.45);
+}
+
+.bee-tab-panel {
+    display: none;
+    animation: beeFadeIn 0.18s ease-out;
+}
+
+.bee-tab-panel.active {
+    display: block;
+}
+
+@keyframes beeFadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   CLASSES UTILITÁRIAS OFFLINE (FALLBACK COMPLETO SEM INTERNET)
+   ========================================================================== */
+.hidden { display: none; }
+.block { display: block; }
+.inline-block { display: inline-block; }
+.flex { display: flex; }
+.inline-flex { display: inline-flex; }
+.grid { display: grid; }
+.flex-col { flex-direction: column; }
+.flex-row { flex-direction: row; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-1 { flex: 1 1 0%; }
+.flex-shrink-0 { flex-shrink: 0; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.justify-end { justify-content: flex-end; }
+.gap-1 { gap: 0.25rem; }
+.gap-1\.5 { gap: 0.375rem; }
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 0.75rem; }
+.gap-4 { gap: 1rem; }
+.gap-5 { gap: 1.25rem; }
+.gap-6 { gap: 1.5rem; }
+.gap-8 { gap: 2rem; }
+
+table { border-collapse: collapse; width: 100%; }
+a { text-decoration: none; color: inherit; }
+
+/* ==========================================================================
+   ISOLAMENTO RIGOROSO DE IMPRESSÃO (@media print)
+   Oculta abas, menus, botões, rodapés e qualquer componente arrastável
+   ========================================================================== */
+@media print {
+    @page {
+        size: auto;
+        margin: 0mm;
+    }
+
+    html, body, .bee-app-shell, .bee-main-wrapper, main, .bee-main-content, #print-page {
+        background: #ffffff !important;
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: visible !important;
+        display: block !important;
+        position: static !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+    }
+
+    /* Ocultação agressiva de todos os elementos interativos, abas, menus e arrastáveis */
+    aside,
+    nav,
+    header,
+    footer,
+    button,
+    .btn,
+    .no-print,
+    .print\:hidden,
+    .bee-sidebar,
+    .bee-topbar,
+    .bee-tabs-bar,
+    .bee-tab-btn,
+    .bee-subtab-btn,
+    [draggable="true"],
+    .draggable,
+    .ui-draggable,
+    .floating-widget,
+    #sidebar-navegacao,
+    #barra-topo-navegacao,
+    #barra-topo-mobile,
+    #topo-impressao,
+    #painel-botoes-modelo,
+    #seletor-documentos-box {
+        display: none !important;
+        visibility: hidden !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        position: absolute !important;
+        left: -9999px !important;
+    }
+}

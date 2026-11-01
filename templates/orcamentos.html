@@ -3,110 +3,128 @@
 {% block title %}Orçamentos - Sistema da Empresa{% endblock %}
 
 {% block content %}
-<div class="p-8 space-y-8 bg-slate-950 w-full min-h-screen text-slate-100 pb-16">
+<div class="p-6 md:p-8 space-y-6 bg-slate-950 w-full min-h-screen text-slate-100 pb-16">
 
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-800 pb-4 gap-4">
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center border-b border-slate-800 pb-5 gap-4">
         <div>
-            <h1 class="text-3xl font-black text-amber-400 tracking-wide flex items-center gap-3">
-                📋 ORÇAMENTOS
+            <h1 class="text-2xl md:text-3xl font-black text-amber-400 tracking-wide flex items-center gap-3">
+                📋 CENTRAL DE ORÇAMENTOS
             </h1>
-            <p class="text-sm text-slate-400 mt-1">Crie orçamentos para clientes e aprove-os para o faturamento com um clique.</p>
+            <p class="text-xs md:text-sm text-slate-400 mt-1">Crie propostas detalhadas com observações por item e converta em venda oficial com um clique.</p>
         </div>
 
-        <button onclick="abrirModalOrcamento()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-5 py-2.5 rounded-xl transition flex items-center gap-2 shadow-lg shadow-amber-400/10 cursor-pointer">
-            ➕ Novo Orçamento
-        </button>
-    </div>
-
-    <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col md:flex-row gap-4 justify-between items-center shadow-xl">
-        <div class="relative w-full md:w-96">
-            <input type="text" id="filtro-orcamentos" oninput="filtrarOrcamentos()" placeholder="Pesquisar por Cód ou Cliente..." class="w-full bg-slate-950 border border-slate-700 text-slate-100 text-sm rounded-xl pl-10 pr-4 py-2.5 outline-none focus:border-amber-400 transition">
-            <span class="absolute left-3.5 top-2.5 text-slate-500">🔍</span>
-        </div>
-        <div class="text-xs text-slate-400">
-            Total de Orçamentos: <span id="total-orcamentos-count" class="font-bold text-amber-400">0</span>
+        <div class="bee-tabs-bar w-full lg:w-auto" role="tablist">
+            <button type="button" id="tab-orc-historico" onclick="alternarAbaOrcamentos('historico')" class="bee-tab-btn active">
+                <span>📋</span> <span>Histórico (<span id="total-orcamentos-count">0</span>)</span>
+            </button>
+            <button type="button" id="tab-orc-novo" onclick="abrirModalOrcamento()" class="bee-tab-btn">
+                <span>➕</span> <span id="lbl-aba-novo-orcamento">Novo Orçamento</span>
+            </button>
         </div>
     </div>
 
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm text-slate-300">
-                <thead class="bg-slate-950 text-slate-400 uppercase text-xs border-b border-slate-800">
-                    <tr>
-                        <th class="p-4">Cód.</th>
-                        <th class="p-4">Data</th>
-                        <th class="p-4">Cliente</th>
-                        <th class="p-4">Valor Total</th>
-                        <th class="p-4 text-center">Ações / Conversão</th>
-                    </tr>
-                </thead>
-                <tbody id="tabela-orcamentos" class="divide-y divide-slate-800/60">
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-</div>
-
-<div id="modal-orcamento" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-    <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl p-6 space-y-6 max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-            <h2 id="modal-orcamento-titulo" class="text-xl font-bold text-amber-400">Cadastrar Novo Orçamento</h2>
-            <button onclick="fecharModalOrcamento()" class="text-slate-400 hover:text-white text-xl cursor-pointer">✕</button>
+    <!-- ABA 1: HISTÓRICO DE ORÇAMENTOS -->
+    <section id="painel-orc-historico" class="bee-tab-panel active space-y-5">
+        <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col md:flex-row gap-4 justify-between items-center shadow-xl">
+            <div class="relative w-full md:w-96">
+                <input type="text" id="filtro-orcamentos" oninput="filtrarOrcamentos()" placeholder="Pesquisar por Cód, Cliente ou Item..." class="w-full bg-slate-950 border border-slate-700 text-slate-100 text-sm rounded-xl pl-10 pr-4 py-2.5 outline-none focus:border-amber-400 transition">
+                <span class="absolute left-3.5 top-2.5 text-slate-500">🔍</span>
+            </div>
+            <button type="button" onclick="abrirModalOrcamento()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs transition flex items-center gap-1.5 shadow cursor-pointer">
+                ➕ Criar Orçamento
+            </button>
         </div>
 
-        <div class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="bg-slate-950 text-slate-400 uppercase text-xs border-b border-slate-800">
+                        <tr>
+                            <th class="p-4">Cód.</th>
+                            <th class="p-4">Data</th>
+                            <th class="p-4">Cliente / Atendente</th>
+                            <th class="p-4">Itens & Observações</th>
+                            <th class="p-4">Valor Total</th>
+                            <th class="p-4 text-center">Ações / Conversão</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-orcamentos" class="divide-y divide-slate-800/60">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ABA 2: NOVO / EDITAR ORÇAMENTO -->
+    <section id="modal-orcamento" class="bee-tab-panel hidden">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-5xl mx-auto rounded-2xl shadow-2xl p-6 md:p-8 space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800 pb-4 gap-3">
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Perfil / Atendente *</label>
-                    <select id="orc-usuario" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 outline-none focus:border-amber-400">
-                        <option value="Sistema">Sistema</option>
-                    </select>
+                    <h2 id="modal-orcamento-titulo" class="text-xl md:text-2xl font-black text-amber-400">Cadastrar Novo Orçamento</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">Adicione os produtos e especifique o acabamento/observação abaixo de cada item.</p>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Cliente</label>
-                    <div class="relative">
-                        <input type="text" id="orc-cliente-busca" placeholder="Digite ou selecione um cliente" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl pl-4 pr-10 py-2.5 outline-none focus:border-amber-400" oninput="filtrarOpcaoClienteOrcamento()" autocomplete="off">
-                        <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-500">▾</span>
-                        <input type="hidden" id="orc-cliente" value="">
-                        <div id="orc-cliente-suggestions" class="hidden absolute left-0 right-0 top-full mt-1 z-20 max-h-48 overflow-y-auto rounded-xl border border-slate-800 bg-slate-950 shadow-2xl"></div>
+                <button type="button" onclick="fecharModalOrcamento()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition cursor-pointer">
+                    ⬅️ Voltar ao Histórico
+                </button>
+            </div>
+
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1.5">Perfil / Atendente *</label>
+                        <select id="orc-usuario" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-400">
+                            <option value="Sistema">Sistema</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1.5">Cliente *</label>
+                        <div class="relative">
+                            <input type="text" id="orc-cliente-busca" placeholder="🔍 Digite ou selecione um cliente" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl pl-4 pr-10 py-2.5 text-sm outline-none focus:border-amber-400" oninput="filtrarOpcaoClienteOrcamento()" autocomplete="off">
+                            <span class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-slate-500">▾</span>
+                            <input type="hidden" id="orc-cliente" value="">
+                            <div id="orc-cliente-suggestions" class="hidden absolute left-0 right-0 top-full mt-1 z-20 max-h-48 overflow-y-auto rounded-xl border border-slate-800 bg-slate-950 shadow-2xl"></div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="border border-slate-800 p-4 rounded-2xl bg-slate-950/50 space-y-3">
-                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-                    <label class="block text-xs font-bold text-slate-400 uppercase">Produtos do Orçamento</label>
-                    <button type="button" onclick="adicionarLinhaProdutoOrcamento()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs px-3 py-1.5 rounded-lg transition cursor-pointer">
-                        ➕ Adicionar Item
-                    </button>
+                <div class="border border-slate-800 p-4 md:p-5 rounded-2xl bg-slate-950/60 space-y-4">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                        <div>
+                            <label class="block text-xs font-black text-amber-400 uppercase">Produtos do Orçamento & Observações por Item</label>
+                            <p class="text-xs text-slate-400">Informe medidas, gramatura ou acabamento individualmente em cada item.</p>
+                        </div>
+                        <button type="button" onclick="adicionarLinhaProdutoOrcamento()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs px-4 py-2 rounded-xl transition cursor-pointer shadow">
+                            ➕ Adicionar Item
+                        </button>
+                    </div>
+                    <div id="container-produtos-orc" class="space-y-3">
+                    </div>
                 </div>
-                <div id="container-produtos-orc" class="space-y-3">
-                </div>
-            </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1.5">Desconto (R$)</label>
+                        <input type="number" step="0.01" min="0" id="orc-desconto" value="0.00" oninput="calcularTotalOrcamento()" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-400">
+                    </div>
+                    <div class="bg-slate-950 p-3.5 rounded-xl border border-amber-400/30 text-center flex flex-col justify-center">
+                        <p class="text-xs text-slate-400 font-bold uppercase">Total Líquido do Orçamento</p>
+                        <p id="lbl-total-orc" class="text-2xl font-black text-amber-400">R$ 0,00</p>
+                    </div>
+                </div>
+
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Desconto (R$)</label>
-                    <input type="number" step="0.01" id="orc-desconto" value="0.00" oninput="calcularTotalOrcamento()" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 outline-none focus:border-amber-400">
-                </div>
-                <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-center flex flex-col justify-center">
-                    <p class="text-xs text-slate-400 font-medium uppercase">Total Líquido do Orçamento</p>
-                    <p id="lbl-total-orc" class="text-2xl font-black text-amber-400">R$ 0,00</p>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1.5">Condições Comerciais / Observações Gerais</label>
+                    <textarea id="orc-observacao" rows="2" placeholder="Ex: Orçamento válido por 7 dias, prazo de produção de 3 dias úteis..." class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-400 resize-none"></textarea>
                 </div>
             </div>
 
-            <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Observações / Anotações</label>
-                <textarea id="orc-observacao" rows="3" placeholder="Ex: Orçamento válido por 7 dias..." class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-400 resize-none"></textarea>
+            <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                <button type="button" onclick="fecharModalOrcamento()" class="px-5 py-2.5 rounded-xl border border-slate-700 text-slate-300 font-bold hover:bg-slate-800 transition cursor-pointer">Cancelar</button>
+                <button type="button" id="btn-salvar-orcamento" onclick="salvarOrcamento()" class="px-6 py-2.5 rounded-xl bg-amber-400 text-slate-950 font-black hover:bg-amber-300 transition cursor-pointer shadow-lg">💾 Salvar Orçamento</button>
             </div>
         </div>
+    </section>
 
-        <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
-            <button type="button" onclick="fecharModalOrcamento()" class="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 font-bold hover:bg-slate-800 transition cursor-pointer">Cancelar</button>
-            <button type="button" id="btn-salvar-orcamento" onclick="salvarOrcamento()" class="px-5 py-2.5 rounded-xl bg-amber-400 text-slate-950 font-bold hover:bg-amber-300 transition cursor-pointer">Salvar Orçamento</button>
-        </div>
-    </div>
 </div>
 
 <script type="module" src="/static/js/orcamentos.js?v=2026"></script>

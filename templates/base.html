@@ -6,60 +6,113 @@
     <title>{% block title %}Sistema da Empresa{% endblock %}</title>
     <link rel="icon" type="image/png" href="/static/uploads/logo.png">
     <link rel="shortcut icon" type="image/png" href="/static/uploads/logo.png">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/css/style.css?v=2026b">
+    <script src="/static/js/vendor/tailwind.js"></script>
 </head>
-<body class="bg-slate-950 font-sans h-screen w-screen overflow-hidden text-slate-100 antialiased m-0 p-0 flex">
+<body class="bee-app-shell bg-slate-950 font-sans text-slate-100 antialiased m-0 p-0">
 
-    <aside class="w-64 bg-slate-900 text-white flex flex-col justify-between shadow-xl h-screen border-r border-slate-800 flex-shrink-0 z-20 print:hidden">
-        <div>
-            <div class="px-4 py-5 border-b border-slate-800 flex justify-center items-center bg-slate-950/40">
-                <img src="/static/uploads/logo.png" alt="Logo da empresa" class="w-full max-w-[180px] h-auto object-contain rounded-xl shadow-sm" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <div class="hidden flex-col items-center text-center">
-                    <h1 class="text-xl font-bold tracking-wider text-amber-400">SISTEMA GRAFICA</h1>
-                    <p class="text-xs text-gray-400 mt-1">Gestão Interna v1.0</p>
+    <!-- MENU LATERAL FIXO (SIDEBAR) -->
+    <aside id="sidebar-navegacao" class="bee-sidebar no-print print:hidden">
+        <div class="bee-sidebar-top">
+            <a href="/pedidos" class="bee-brand-box">
+                <img src="/static/uploads/logo.png" alt="Logo da empresa" class="bee-brand-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div class="bee-brand-fallback">
+                    <span class="text-lg font-black tracking-wider text-amber-400">🐝 SISTEMA GRÁFICA</span>
+                    <span class="text-[11px] text-slate-400">Gestão Interna Local</span>
                 </div>
-            </div>
+            </a>
 
-            <nav class="mt-6 px-4 space-y-2">
-                <a href="/pedidos" class="flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors {% if page == 'pedidos' %}bg-amber-400 text-slate-900 font-bold{% else %}text-gray-300 hover:bg-slate-800{% endif %}">
-                    📦 Pedidos & Vendas
+            <div class="bee-nav-section-label">MÓDULOS DO SISTEMA</div>
+
+            <nav class="bee-sidebar-nav" aria-label="Menu Principal">
+                <a href="/pedidos" class="bee-nav-link {% if page == 'pedidos' %}active{% endif %}">
+                    <span class="bee-nav-icon">📦</span>
+                    <span>Pedidos & Vendas</span>
                 </a>
-                <a href="/produtos" class="flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors {% if page == 'produtos' %}bg-amber-400 text-slate-900 font-bold{% else %}text-gray-300 hover:bg-slate-800{% endif %}">
-                    🏷️ Produtos & Quantidades
+                <a href="/orcamentos" class="bee-nav-link {% if page == 'orcamentos' %}active{% endif %}">
+                    <span class="bee-nav-icon">📋</span>
+                    <span>Orçamentos</span>
                 </a>
-                <a href="/clientes" class="flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors {% if page == 'clientes' %}bg-amber-400 text-slate-900 font-bold{% else %}text-gray-300 hover:bg-slate-800{% endif %}">
-                    👥 Clientes
+                <a href="/produtos" class="bee-nav-link {% if page == 'produtos' %}active{% endif %}">
+                    <span class="bee-nav-icon">🏷️</span>
+                    <span>Produtos & Estoque</span>
                 </a>
-                <a href="/dashboard" class="flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors {% if page == 'dashboard' %}bg-amber-400 text-slate-900 font-bold{% else %}text-gray-300 hover:bg-slate-800{% endif %}">
-                    📊 Dashboard
+                <a href="/clientes" class="bee-nav-link {% if page == 'clientes' %}active{% endif %}">
+                    <span class="bee-nav-icon">👥</span>
+                    <span>Clientes</span>
                 </a>
-                <a href="/imprimir" class="flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors {% if page == 'imprimir' %}bg-amber-400 text-slate-900 font-bold{% else %}text-gray-300 hover:bg-slate-800{% endif %}">
-                    🖨️ Impressão
+                <a href="/dashboard" class="bee-nav-link {% if page == 'dashboard' %}active{% endif %}">
+                    <span class="bee-nav-icon">📊</span>
+                    <span>Dashboard</span>
                 </a>
-                <a href="/orcamentos" class="flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors {% if page == 'orcamentos' %}bg-amber-400 text-slate-900 font-bold{% else %}text-gray-300 hover:bg-slate-800{% endif %}">
-                    📋 Orçamentos
+                <a href="/imprimir" class="bee-nav-link {% if page == 'imprimir' %}active{% endif %}">
+                    <span class="bee-nav-icon">🖨️</span>
+                    <span>Central de Impressão</span>
                 </a>
 
                 {% if user and user.lower() in ['admin', 'thaissa', 'michel', 'thaissa/michel'] %}
-                <a href="/financeiro" class="flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors {% if page == 'financeiro' %}bg-emerald-500 text-slate-950 font-bold{% else %}text-emerald-400 hover:bg-slate-800{% endif %}">
-                    🔒 💰 Financeiro Pro
+                <a href="/financeiro" class="bee-nav-link bee-nav-link-financeiro {% if page == 'financeiro' %}active{% endif %}">
+                    <span class="bee-nav-icon">💰</span>
+                    <span>Financeiro Pro</span>
                 </a>
                 {% endif %}
             </nav>
         </div>
 
-        <div class="p-4 border-t border-slate-800 flex items-center justify-between">
-            <div class="text-sm">
-                <p class="text-gray-400">Usuário:</p>
-                <p class="font-bold text-white capitalize">{{ user }}</p>
+        <div class="bee-sidebar-footer">
+            <div class="text-xs">
+                <p class="text-slate-400">Operador ativo:</p>
+                <p class="font-bold text-sm text-amber-400 capitalize">{{ user or 'Admin' }}</p>
             </div>
-            <a href="/logout" class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-2 rounded font-bold transition">Sair</a>
+            <a href="/logout" class="bg-rose-600 hover:bg-rose-500 text-white text-xs px-3 py-2 rounded-lg font-bold transition shadow">Sair</a>
         </div>
     </aside>
 
-    <main class="flex-1 bg-slate-950 h-screen overflow-y-auto w-full">
-        {% block content %}{% endblock %}
-    </main>
+    <!-- ÁREA PRINCIPAL + BARRA DE NAVEGAÇÃO SUPERIOR -->
+    <div class="bee-main-wrapper">
+        <header id="barra-topo-navegacao" class="bee-topbar no-print print:hidden">
+            <div class="bee-topbar-inner">
+                <div class="bee-topbar-brand">
+                    <span class="text-amber-400 font-black text-sm tracking-wide">🐝 GRÁFICA</span>
+                </div>
+
+                <nav class="bee-topbar-nav" aria-label="Navegação Rápida entre Funcionalidades">
+                    <a href="/pedidos" class="bee-topnav-pill {% if page == 'pedidos' %}active{% endif %}">
+                        <span>📦</span> <span>Pedidos</span>
+                    </a>
+                    <a href="/orcamentos" class="bee-topnav-pill {% if page == 'orcamentos' %}active{% endif %}">
+                        <span>📋</span> <span>Orçamentos</span>
+                    </a>
+                    <a href="/produtos" class="bee-topnav-pill {% if page == 'produtos' %}active{% endif %}">
+                        <span>🏷️</span> <span>Produtos</span>
+                    </a>
+                    <a href="/clientes" class="bee-topnav-pill {% if page == 'clientes' %}active{% endif %}">
+                        <span>👥</span> <span>Clientes</span>
+                    </a>
+                    <a href="/dashboard" class="bee-topnav-pill {% if page == 'dashboard' %}active{% endif %}">
+                        <span>📊</span> <span>Dashboard</span>
+                    </a>
+                    <a href="/imprimir" class="bee-topnav-pill {% if page == 'imprimir' %}active{% endif %}">
+                        <span>🖨️</span> <span>Impressão</span>
+                    </a>
+                    {% if user and user.lower() in ['admin', 'thaissa', 'michel', 'thaissa/michel'] %}
+                    <a href="/financeiro" class="bee-topnav-pill bee-topnav-pill-fin {% if page == 'financeiro' %}active{% endif %}">
+                        <span>💰</span> <span>Financeiro</span>
+                    </a>
+                    {% endif %}
+                </nav>
+
+                <div class="bee-topbar-user">
+                    <span class="text-xs text-slate-400">👤 <strong class="text-amber-400 capitalize">{{ user or 'Admin' }}</strong></span>
+                    <a href="/logout" class="bg-rose-600 hover:bg-rose-500 text-white text-xs px-2.5 py-1 rounded-lg font-bold transition">Sair</a>
+                </div>
+            </div>
+        </header>
+
+        <main class="bee-main-content print:h-auto print:overflow-visible print:bg-white print:text-black">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
 
 </body>
 </html>

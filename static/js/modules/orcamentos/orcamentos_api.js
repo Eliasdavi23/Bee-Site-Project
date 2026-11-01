@@ -76,3 +76,14 @@ export async function converterVendaAPI(orcamentoId) {
     const resultado = await response.json();
     return { ok: response.ok, resultado };
 }
+
+export async function deleteOrcamentoAPI(orcamentoId) {
+    try {
+        const response = await fetch(`/api/orcamentos/${orcamentoId}`, {
+            method: 'DELETE'
+        });
+        return response.ok;
+    } catch (error) {
+        return false;
+    }
+}

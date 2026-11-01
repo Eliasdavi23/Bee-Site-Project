@@ -1,13 +1,11 @@
-from fastapi import APIRouter, Request, HTTPException
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Optional
 from config.database import get_connection
 from routes.auth_routes import auth_required
 
 router = APIRouter()
-templates = Jinja2Templates(directory="templates")
+
 
 class ClienteSchema(BaseModel):
     nome: str
@@ -16,64 +14,89 @@ class ClienteSchema(BaseModel):
     email: Optional[str] = ""
     endereco: Optional[str] = ""
 
-@router.get("/clientes", response_class=HTMLResponse)
-def page_clientes(request: Request):
-    user = auth_required(request)
-    return templates.TemplateResponse(
-        request=request,
-        name="clientes.html",
-        context={"page": "clientes", "user": user}
-    )
 
 @router.get("/api/clientes")
-def listar_clientes():
+def listar_clientes(user: str = Depends(auth_required)):
     conn = get_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM clientes ORDER BY id DESC")
-    clientes = [dict(row) for row in cursor.fetchall()]
-    conn.close()
-    return clientes
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM clientes ORDER BY id DESC")
+        clientes = [dict(row) for row in cursor.fetchall()]
+        return clientes
+    except Exception as e:
+        print(f"Erro ao listar clientes: {e}")
+        return []
+    finally:
+        conn.close()
+
 
 @router.post("/api/clientes")
-def criar_cliente(c: ClienteSchema):
+def criar_cliente(c: ClienteSchema, user: str = Depends(auth_required)):
+    nome = (c.nome or "").strip()
+    if not nome:
+        return {"sucesso": False, "erro": "O nome do cliente é obrigatório."}
+    conn = get_connection()
     try:
-        conn = get_connection()
         cursor = conn.cursor()
-        # Usando a coluna 'documento' que é a que realmente existe no banco
         cursor.execute("""
             INSERT INTO clientes (nome, documento, telefone, email, endereco)
             VALUES (?, ?, ?, ?, ?)
-        """, (c.nome, c.documento, c.telefone, c.email, c.endereco))
+        """, (
+            nome,
+            (c.documento or "").strip(),
+            (c.telefone or "").strip(),
+            (c.email or "").strip(),
+            (c.endereco or "").strip()
+        ))
         conn.commit()
-        conn.close()
-        return {"sucesso": True}
+        return {"sucesso": True, "id": cursor.lastrowid}
     except Exception as e:
+        conn.rollback()
         return {"sucesso": False, "erro": str(e)}
+    finally:
+        conn.close()
+
 
 @router.put("/api/clientes/{cliente_id}")
-def atualizar_cliente(cliente_id: int, c: ClienteSchema):
+def atualizar_cliente(cliente_id: int, c: ClienteSchema, user: str = Depends(auth_required)):
+    nome = (c.nome or "").strip()
+    if not nome:
+        return {"sucesso": False, "erro": "O nome do cliente é obrigatório."}
+    conn = get_connection()
     try:
-        conn = get_connection()
         cursor = conn.cursor()
         cursor.execute("""
             UPDATE clientes 
             SET nome=?, documento=?, telefone=?, email=?, endereco=?
             WHERE id=?
-        """, (c.nome, c.documento, c.telefone, c.email, c.endereco, cliente_id))
+        """, (
+            nome,
+            (c.documento or "").strip(),
+            (c.telefone or "").strip(),
+            (c.email or "").strip(),
+            (c.endereco or "").strip(),
+            cliente_id
+        ))
         conn.commit()
-        conn.close()
         return {"sucesso": True}
     except Exception as e:
+        conn.rollback()
         return {"sucesso": False, "erro": str(e)}
+    finally:
+        conn.close()
+
 
 @router.delete("/api/clientes/{cliente_id}")
-def excluir_cliente(cliente_id: int):
+def excluir_cliente(cliente_id: int, user: str = Depends(auth_required)):
+    conn = get_connection()
     try:
-        conn = get_connection()
         cursor = conn.cursor()
+        cursor.execute("UPDATE pedidos SET cliente_id = NULL WHERE cliente_id = ?", (cliente_id,))
         cursor.execute("DELETE FROM clientes WHERE id=?", (cliente_id,))
         conn.commit()
-        conn.close()
         return {"sucesso": True}
     except Exception as e:
+        conn.rollback()
         return {"sucesso": False, "erro": str(e)}
+    finally:
+        conn.close()
