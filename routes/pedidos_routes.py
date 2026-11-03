@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from pydantic import BaseModel
 from config.database import get_connection
 from routes.auth_routes import auth_required
+from services.whatsapp.notificacoes import notificar_mudanca_status
 
 router = APIRouter(prefix="/api/pedidos", tags=["Pedidos"])
 
@@ -211,7 +212,10 @@ async def salvar_pedido(
         cursor = conn.cursor()
         data_atual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+        status_anterior = None
         if pedido_id:
+            row_ant = cursor.execute("SELECT status_producao FROM pedidos WHERE id = ?", (int(pedido_id),)).fetchone()
+            status_anterior = row_ant["status_producao"] if row_ant else None
             cursor.execute("""
                 UPDATE pedidos 
                 SET cliente_id = ?, valor_total = ?, valor_pago = ?, desconto = ?, 
@@ -293,7 +297,8 @@ async def salvar_pedido(
                 """, (int(pedido_id), f"/{file_path}"))
 
         conn.commit()
-        return {"sucesso": True, "mensagem": "Pedido salvo com sucesso!", "id": pedido_id}
+        notificacao = notificar_mudanca_status(int(pedido_id), status_anterior, status_producao, usuario=usuario_nome)
+        return {"sucesso": True, "mensagem": "Pedido salvo com sucesso!", "id": pedido_id, "whatsapp_notificacao": notificacao}
     except Exception as e:
         conn.rollback()
         print(f"Erro ao salvar pedido: {e}")
@@ -307,7 +312,7 @@ def atualizar_status_pedido(pedido_id: int, payload: StatusUpdateSchema, user: s
     conn = get_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT id, valor_total, valor_pago FROM pedidos WHERE id = ?", (pedido_id,))
+        cursor.execute("SELECT id, valor_total, valor_pago, status_producao FROM pedidos WHERE id = ?", (pedido_id,))
         pedido = cursor.fetchone()
         if not pedido:
             raise HTTPException(status_code=404, detail="Pedido não encontrado.")
@@ -335,7 +340,12 @@ def atualizar_status_pedido(pedido_id: int, payload: StatusUpdateSchema, user: s
                     (novo_st_pag, pedido_id)
                 )
         conn.commit()
-        return {"sucesso": True}
+        status_anterior = pedido["status_producao"]
+        notificacao = (
+            notificar_mudanca_status(pedido_id, status_anterior, payload.status_producao, usuario=user or "Sistema")
+            if payload.status_producao else None
+        )
+        return {"sucesso": True, "whatsapp_notificacao": notificacao}
     except HTTPException:
         raise
     except Exception as e:

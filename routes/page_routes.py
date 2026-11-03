@@ -69,3 +69,12 @@ def pagina_orcamentos(request: Request, user: str = Depends(auth_required)):
         name="orcamentos.html",
         context={"page": "orcamentos", "user": user}
     )
+
+
+@router.get("/atendimento", response_class=HTMLResponse)
+def pagina_atendimento(request: Request, user: str = Depends(auth_required)):
+    return templates.TemplateResponse(
+        request=request,
+        name="atendimento.html",
+        context={"page": "atendimento", "user": user}
+    )

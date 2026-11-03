@@ -252,6 +252,9 @@ async function salvarPedido(irParaImpressao = false) {
             return;
         }
         window.fecharModalPedido();
+        if (window.oferecerAvisoStatusWhatsApp && resultado.whatsapp_notificacao) {
+            window.oferecerAvisoStatusWhatsApp(resultado.whatsapp_notificacao);
+        }
     } else {
         alert("Erro ao salvar pedido: " + (resultado?.erro || "Verifique os dados informados."));
     }

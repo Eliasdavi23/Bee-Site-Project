@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Atendimento WhatsApp & IA - Sistema da Empresa{% endblock %}
+
+{% block content %}
+<div class="p-6 space-y-6 bg-slate-950 w-full min-h-screen text-slate-100 pb-16">
+
+    <!-- CABEÇALHO E STATUS DO MÓDULO -->
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center border-b border-slate-800 pb-4 gap-4">
+        <div>
+            <h1 class="text-2xl md:text-3xl font-black text-emerald-400 tracking-wide flex items-center gap-3">
+                💬 CENTRAL DE ATENDIMENTO WHATSAPP + IA
+            </h1>
+            <p class="text-xs md:text-sm text-slate-400 mt-1">
+                Converse com clientes, consulte pedidos automaticamente e gere respostas inteligentes com 1 clique.
+            </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+            <span id="wa-status-provedor" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 border border-slate-700 text-slate-300">
+                Modo: verificando...
+            </span>
+            <span id="wa-status-ia" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 border border-slate-700 text-slate-300">
+                IA: verificando...
+            </span>
+            <button type="button" onclick="abrirModalNovaMensagemCliente()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-4 py-2 rounded-xl text-xs transition cursor-pointer shadow-lg">
+                ➕ Colar Mensagem de Cliente
+            </button>
+        </div>
+    </div>
+
+    <!-- BARRA DE CONFIGURAÇÕES AUTOMÁTICAS (VISÍVEL PARA GESTORES) -->
+    <div id="wa-painel-gestor" class="hidden bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div class="space-y-0.5">
+            <div class="text-xs font-black text-amber-400 uppercase tracking-wider">⚙️ Automação do Atendimento (Gestores)</div>
+            <p id="wa-resumo-config" class="text-xs text-slate-400">
+                No modo híbrido (wa.me), o sistema prepara a resposta com IA e abre o WhatsApp com 1 clique. Quando conectar a Evolution API ou Cloud API no .env, o robô responde sozinho.
+            </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-4">
+            <label class="inline-flex items-center gap-2 text-xs font-bold text-slate-200 cursor-pointer">
+                <input type="checkbox" id="chk-wa-aviso-status" onchange="salvarConfigWhatsApp()" class="accent-emerald-400 w-4 h-4">
+                <span>Avisar cliente quando status do pedido mudar</span>
+            </label>
+            <label class="inline-flex items-center gap-2 text-xs font-bold text-slate-200 cursor-pointer">
+                <input type="checkbox" id="chk-wa-auto-resposta" onchange="salvarConfigWhatsApp()" class="accent-amber-400 w-4 h-4">
+                <span>Robô IA responde clientes sozinho (Webhook)</span>
+            </label>
+        </div>
+    </div>
+
+    <!-- GRADE PRINCIPAL DO ATENDIMENTO -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+
+        <!-- COLUNA 1: LISTA DE CONVERSAS -->
+        <aside class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col h-[640px] overflow-hidden shadow-xl">
+            <div class="p-3.5 border-b border-slate-800 space-y-2.5 bg-slate-950/60">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-black uppercase tracking-wider text-slate-300">Conversas</span>
+                    <span id="wa-contador-pendentes" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/30">
+                        0 aguardando
+                    </span>
+                </div>
+                <input
+                    type="text"
+                    id="wa-busca-conversa"
+                    oninput="carregarConversas()"
+                    placeholder="🔍 Buscar nome ou telefone..."
+                    class="w-full bg-slate-950 border border-slate-700 text-slate-100 text-xs rounded-xl px-3 py-2 outline-none focus:border-emerald-400"
+                >
+            </div>
+
+            <div id="wa-lista-conversas" class="flex-1 overflow-y-auto divide-y divide-slate-800/60">
+                <div class="p-6 text-center text-xs text-slate-500">Carregando conversas...</div>
+            </div>
+        </aside>
+
+        <!-- COLUNA 2: CHAT E RESPOSTA SUGERIDA PELA IA -->
+        <section class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col h-[640px] overflow-hidden shadow-xl">
+            <header id="wa-chat-topo" class="p-4 border-b border-slate-800 bg-slate-950/60 flex justify-between items-center gap-2">
+                <div>
+                    <h2 id="wa-chat-nome" class="text-sm font-black text-slate-100">Selecione uma conversa</h2>
+                    <p id="wa-chat-telefone" class="text-xs text-slate-400">Ou clique em "Colar Mensagem de Cliente" acima</p>
+                </div>
+                <div id="wa-chat-acoes" class="hidden items-center gap-2">
+                    <button type="button" id="btn-wa-toggle-auto" onclick="alternarModoAutoConversa()" class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold border border-slate-700 bg-slate-800 text-slate-300 cursor-pointer">
+                        🤖 Robô: ON
+                    </button>
+                    <a id="link-wa-direto" href="#" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-800 transition">
+                        Abrir WhatsApp ↗
+                    </a>
+                </div>
+            </header>
+
+            <div id="wa-chat-mensagens" class="flex-1 p-4 overflow-y-auto space-y-3 bg-slate-950/40">
+                <div class="p-8 text-center text-xs text-slate-500">
+                    Nenhuma conversa selecionada.
+                </div>
+            </div>
+
+            <footer class="p-3.5 border-t border-slate-800 bg-slate-950 space-y-2.5">
+                <div class="flex flex-wrap justify-between items-center gap-2">
+                    <button
+                        type="button"
+                        id="btn-wa-sugerir-ia"
+                        onclick="pedirSugestaoIA()"
+                        disabled
+                        class="bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border border-amber-400/40 font-black text-xs px-3 py-1.5 rounded-xl transition cursor-pointer disabled:opacity-40"
+                    >
+                        ✨ Sugerir Resposta com IA
+                    </button>
+                    <span id="wa-feedback-envio" class="text-[11px] text-slate-400"></span>
+                </div>
+
+                <div class="flex gap-2">
+                    <textarea
+                        id="wa-input-resposta"
+                        rows="3"
+                        maxlength="1500"
+                        disabled
+                        placeholder="Digite a resposta ou clique em 'Sugerir Resposta com IA'..."
+                        class="flex-1 bg-slate-900 border border-slate-700 text-slate-100 text-xs rounded-xl p-2.5 outline-none focus:border-emerald-400 resize-none disabled:opacity-50"
+                    ></textarea>
+                    <button
+                        type="button"
+                        id="btn-wa-enviar-resposta"
+                        onclick="enviarRespostaPainel()"
+                        disabled
+                        class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs px-4 rounded-xl transition cursor-pointer shadow-lg disabled:opacity-40"
+                    >
+                        Enviar 📲
+                    </button>
+                </div>
+            </footer>
+        </section>
+
+        <!-- COLUNA 3: FICHA E PEDIDOS DO CLIENTE NO BANCO -->
+        <aside class="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col h-[640px] overflow-hidden shadow-xl">
+            <div class="p-3.5 border-b border-slate-800 bg-slate-950/60">
+                <h3 class="text-xs font-black uppercase tracking-wider text-amber-400">📋 Contexto do Cliente (IA)</h3>
+                <p class="text-[11px] text-slate-400 mt-0.5">Dados reais consultados pela IA antes de responder</p>
+            </div>
+            <div id="wa-contexto-cliente" class="flex-1 p-4 overflow-y-auto text-xs text-slate-300 whitespace-pre-wrap leading-relaxed font-mono bg-slate-950/30">
+                Selecione uma conversa para ver os pedidos e orçamentos vinculados a este telefone.
+            </div>
+        </aside>
+
+    </div>
+</div>
+
+<!-- MODAL: COLAR MENSAGEM DE CLIENTE (PARA MODO WA.ME / SEM WEBHOOK) -->
+<div id="modal-nova-msg-cliente" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+            <h2 class="text-lg font-black text-amber-400">➕ Colar Mensagem Recebida no WhatsApp</h2>
+            <button type="button" onclick="fecharModalNovaMensagemCliente()" class="text-slate-400 hover:text-white text-xl cursor-pointer">✕</button>
+        </div>
+
+        <p class="text-xs text-slate-400">
+            Cole a dúvida que o cliente mandou no WhatsApp. O sistema localiza os pedidos dele pelo telefone e a IA já escreve a resposta pronta para você enviar.
+        </p>
+
+        <form onsubmit="registrarMensagemManual(event)" class="space-y-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Telefone / WhatsApp *</label>
+                    <input type="text" id="manual-wa-telefone" required placeholder="(11) 98888-7777" class="w-full bg-slate-950 border border-slate-700 text-slate-100 text-xs rounded-xl px-3 py-2.5 outline-none focus:border-amber-400">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">Nome do Contato (opcional)</label>
+                    <input type="text" id="manual-wa-nome" placeholder="Ex.: Maria" class="w-full bg-slate-950 border border-slate-700 text-slate-100 text-xs rounded-xl px-3 py-2.5 outline-none focus:border-amber-400">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-bold text-slate-400 uppercase mb-1">O que o cliente perguntou? *</label>
+                <textarea id="manual-wa-texto" rows="4" required maxlength="2000" placeholder="Ex.: Oi! Meu pedido já ficou pronto para retirar?" class="w-full bg-slate-950 border border-slate-700 text-slate-100 text-xs rounded-xl p-3 outline-none focus:border-amber-400"></textarea>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <button type="button" onclick="fecharModalNovaMensagemCliente()" class="px-4 py-2 rounded-xl border border-slate-700 text-slate-300 text-xs font-bold hover:bg-slate-800 transition cursor-pointer">Cancelar</button>
+                <button type="submit" id="btn-salvar-manual-wa" class="px-5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black transition cursor-pointer">
+                    ✨ Registrar e Gerar Resposta IA
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="/static/js/atendimento.js?v=2026a"></script>
+{% endblock %}

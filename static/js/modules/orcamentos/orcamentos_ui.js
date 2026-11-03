@@ -64,6 +64,7 @@ export function renderizarTabela(orcamentos) {
                         <button type="button" onclick="abrirModalEdicaoOrcamento(${o.id})" class="bg-sky-600 hover:bg-sky-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition shadow cursor-pointer inline-flex items-center gap-1">
                             ✏️ Editar
                         </button>
+                        <button type="button" onclick="abrirModalWhatsApp({tipo: 'orcamento', pedido_id: ${o.id}})" class="bg-emerald-950/80 hover:bg-emerald-800 text-emerald-300 border border-emerald-500/30 font-bold px-3 py-1.5 rounded-xl text-xs transition cursor-pointer inline-flex items-center gap-1" title="Enviar orçamento no WhatsApp">💬 Whats</button>
                         <a href="/imprimir?id=${o.id}&tipo=orcamento" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-3 py-1.5 rounded-xl text-xs transition inline-block">
                             🖨️ Imprimir
                         </a>

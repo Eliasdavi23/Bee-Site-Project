@@ -38,10 +38,11 @@ from routes.pedidos_routes import router as pedidos_router
 from routes.dashboard_routes import router as dashboard_router
 from routes.financeiro_routes import router as financeiro_router
 from routes.orcamentos_routes import router as orcamentos_router
+from routes.whatsapp_routes import router as whatsapp_router
 
 logger = logging.getLogger("uvicorn.error")
 
-GEMINI_MODEL_NAME = "gemini-2.5-flash"
+GEMINI_MODEL_NAME = "gemini-3.8-flash"
 GITIGNORE_REQUIRED_ENTRIES = (".env", "__pycache__/", "venv/")
 
 
@@ -163,6 +164,7 @@ app.include_router(pedidos_router)
 app.include_router(dashboard_router)
 app.include_router(financeiro_router)
 app.include_router(orcamentos_router)
+app.include_router(whatsapp_router)
 
 
 @app.post(
@@ -173,17 +175,25 @@ app.include_router(orcamentos_router)
 )
 async def gerar_conteudo_gemini(payload: PromptRequest) -> PromptResponse:
     """
-    Endpoint resiliente integrado ao modelo gemini-2.5-flash.
+    Endpoint resiliente integrado ao modelo gemini-3.8-flash.
     Captura falhas de rede/timeout e erros de upstream sem vazar tracebacks internos.
     """
     client = obter_cliente_gemini()
 
     try:
-        response = client.models.generate_content(
-            model=GEMINI_MODEL_NAME,
-            contents=payload.prompt,
-        )
-        texto = (getattr(response, "text", None) or "").strip()
+        if hasattr(client, "interactions"):
+            interaction = client.interactions.create(
+                model=GEMINI_MODEL_NAME,
+                input=payload.prompt,
+                store=False,
+            )
+            texto = (getattr(interaction, "output_text", None) or "").strip()
+        else:
+            response = client.models.generate_content(
+                model=GEMINI_MODEL_NAME,
+                contents=payload.prompt,
+            )
+            texto = (getattr(response, "text", None) or "").strip()
         if not texto:
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY,

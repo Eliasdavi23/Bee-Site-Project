@@ -49,6 +49,11 @@
                     <span class="bee-nav-icon">🖨️</span>
                     <span>Central de Impressão</span>
                 </a>
+                <a href="/atendimento" class="bee-nav-link {% if page == 'atendimento' %}active{% endif %}">
+                    <span class="bee-nav-icon">💬</span>
+                    <span>Atendimento WhatsApp</span>
+                </a>
+                </a>
 
                 {% if user and user.lower() in ['admin', 'thaissa', 'michel', 'thaissa/michel'] %}
                 <a href="/financeiro" class="bee-nav-link bee-nav-link-financeiro {% if page == 'financeiro' %}active{% endif %}">
@@ -94,6 +99,10 @@
                     </a>
                     <a href="/imprimir" class="bee-topnav-pill {% if page == 'imprimir' %}active{% endif %}">
                         <span>🖨️</span> <span>Impressão</span>
+                    </a>
+                    <a href="/atendimento" class="bee-topnav-pill {% if page == 'atendimento' %}active{% endif %}">
+                        <span>💬</span> <span>WhatsApp</span>
+                    </a>
                     </a>
                     {% if user and user.lower() in ['admin', 'thaissa', 'michel', 'thaissa/michel'] %}
                     <a href="/financeiro" class="bee-topnav-pill bee-topnav-pill-fin {% if page == 'financeiro' %}active{% endif %}">
@@ -507,5 +516,6 @@
             });
         })();
     </script>
+    <script src="/static/js/whatsapp_modal.js?v=2026a"></script>
 </body>
 </html>

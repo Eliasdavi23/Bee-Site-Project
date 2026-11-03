@@ -96,6 +96,7 @@ export function renderizarTabela(pedidos) {
                 <td class="p-4 text-center text-xs text-slate-400 whitespace-nowrap">${escaparHtml(p.data || '-')}</td>
                 <td class="p-4 text-center whitespace-nowrap">
                     <div class="flex items-center justify-center gap-1.5">
+                        <button type="button" onclick="abrirModalWhatsApp({tipo: 'status_pedido', pedido_id: ${p.id}})" class="p-2 bg-emerald-950/70 hover:bg-emerald-800 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-bold transition cursor-pointer" title="Enviar WhatsApp com IA">💬 Whats</button>
                         <a href="/imprimir?id=${p.id}" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold transition cursor-pointer" title="Imprimir Pedido">🖨️ Imprimir</a>
                         <button type="button" onclick="editarPedido(${p.id})" class="p-2 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-lg text-xs font-bold transition cursor-pointer" title="Editar Pedido">✏️ Editar</button>
                         <button type="button" onclick="excluirPedido(${p.id})" class="p-2 bg-slate-800 hover:bg-rose-950 text-rose-400 rounded-lg text-xs font-bold transition cursor-pointer" title="Excluir Pedido">🗑️</button>

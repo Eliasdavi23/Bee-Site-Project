@@ -10,6 +10,54 @@ def get_connection():
     return conn
 
 
+def _criar_tabelas_whatsapp(cursor):
+    """Tabelas do atendimento via WhatsApp (conversas + histórico de mensagens)."""
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS whatsapp_conversas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            telefone TEXT NOT NULL UNIQUE,
+            nome_contato TEXT DEFAULT '',
+            cliente_id INTEGER,
+            modo_auto INTEGER DEFAULT 1,
+            precisa_atendente INTEGER DEFAULT 0,
+            nao_lidas INTEGER DEFAULT 0,
+            ultima_mensagem TEXT DEFAULT '',
+            ultima_mensagem_em TEXT,
+            criada_em TEXT,
+            FOREIGN KEY (cliente_id) REFERENCES clientes (id) ON DELETE SET NULL
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS whatsapp_mensagens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            conversa_id INTEGER NOT NULL,
+            direcao TEXT NOT NULL,
+            autor TEXT NOT NULL,
+            texto TEXT NOT NULL,
+            status TEXT DEFAULT 'RECEBIDA',
+            id_externo TEXT,
+            usuario TEXT DEFAULT '',
+            criada_em TEXT,
+            FOREIGN KEY (conversa_id) REFERENCES whatsapp_conversas (id) ON DELETE CASCADE
+        )
+    """)
+    # Impede gravar duas vezes a mesma mensagem quando o provedor reenvia o webhook
+    cursor.execute("""
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_whatsapp_msg_id_externo
+        ON whatsapp_mensagens (id_externo) WHERE id_externo IS NOT NULL
+    """)
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_whatsapp_msg_conversa
+        ON whatsapp_mensagens (conversa_id, id)
+    """)
+    cursor.executemany("""
+        INSERT OR IGNORE INTO configuracoes (chave, valor) VALUES (?, ?)
+    """, [
+        ('whatsapp_auto_resposta', '0'),  # Robô só responde sozinho depois que um gestor ligar
+        ('whatsapp_aviso_status', '1'),   # Avisar cliente quando o status do pedido mudar
+    ])
+
+
 def init_db():
     conn = get_connection()
     try:
@@ -137,6 +185,8 @@ def init_db():
         cursor.executemany("""
             INSERT OR IGNORE INTO configuracoes (chave, valor) VALUES (?, ?)
         """, configs_padrao)
+
+        _criar_tabelas_whatsapp(cursor)
 
         # MIGRAÇÕES AUTOMÁTICAS
         cursor.execute("PRAGMA table_info(clientes)")
