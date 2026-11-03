@@ -4,3 +4,5 @@ sistema_grafica.db
 *.sqlite3
 __pycache__/
 *.py[cod]
+.env
+venv/

@@ -279,3 +279,24 @@ def test_pedidos_e_orcamentos_com_numeros_decimais():
     deletar_pedido(ped_id, user="admin")
     deletar_pedido(orc_id, user="admin")
     excluir_cliente(cliente_id, user="admin")
+
+
+def test_pilares_gemini_e_gitignore():
+    """Valida a proteção do .gitignore no lifespan e a validação Pydantic anti-gorilas do PromptRequest."""
+    main.garantir_seguranca_gitignore()
+    gitignore_path = pathlib.Path(__file__).resolve().parent.parent / ".gitignore"
+    assert gitignore_path.exists()
+    linhas = {l.strip() for l in gitignore_path.read_text(encoding="utf-8").splitlines() if l.strip()}
+    assert ".env" in linhas
+    assert "__pycache__/" in linhas
+    assert "venv/" in linhas
+
+    # Testa strip_whitespace e limites de tamanho no PromptRequest
+    req_valida = main.PromptRequest(prompt="   Criar descrição para cartão de visita   ")
+    assert req_valida.prompt == "Criar descrição para cartão de visita"
+
+    try:
+        main.PromptRequest(prompt="   ")
+        assert False, "Deveria rejeitar prompt apenas com espaços em branco"
+    except Exception:
+        pass
