@@ -149,11 +149,11 @@ export function construirLinhaProduto(idUnico, produto = null, precoInicial = 0,
                 </div>
                 <div class="w-full md:w-24">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Quantidade</label>
-                    <input type="number" min="1" value="${qtdNum}" oninput="calcularTotalGlobal()" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm text-center inp-qtd focus:outline-none focus:border-amber-400" placeholder="Qtd">
+                    <input type="number" step="any" min="0.01" value="${qtdNum}" oninput="calcularTotalGlobal()" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm text-center inp-qtd focus:outline-none focus:border-amber-400" placeholder="Qtd">
                 </div>
                 <div class="w-full md:w-32">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Valor Unit. (R$)</label>
-                    <input type="number" step="0.01" min="0" value="${precoNum.toFixed(2)}" oninput="calcularTotalGlobal()" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm text-right inp-preco focus:outline-none focus:border-amber-400" placeholder="R$ Unit">
+                    <input type="number" step="any" min="0" value="${precoNum.toFixed(2)}" oninput="calcularTotalGlobal()" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm text-right inp-preco focus:outline-none focus:border-amber-400" placeholder="R$ Unit">
                 </div>
                 <div class="w-full md:w-28 text-right">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Subtotal</label>

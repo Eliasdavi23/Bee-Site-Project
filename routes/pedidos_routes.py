@@ -146,12 +146,28 @@ async def salvar_pedido(
     if not produtos:
         return {"sucesso": False, "erro": "Adicione pelo menos um item ao pedido."}
 
-    try:
-        desconto = max(0.0, float(payload.get("desconto") or 0.0))
-        valor_pago = max(0.0, float(payload.get("valor_pago") or 0.0))
-    except (TypeError, ValueError):
-        desconto = 0.0
-        valor_pago = 0.0
+    def _parse_decimal(valor, padrao: float = 0.0) -> float:
+        if valor is None or valor == "":
+            return padrao
+        if isinstance(valor, (int, float)):
+            return float(valor)
+        texto = str(valor).strip().replace("R$", "").replace(" ", "")
+        if not texto:
+            return padrao
+        if "," in texto and "." in texto:
+            if texto.rfind(",") > texto.rfind("."):
+                texto = texto.replace(".", "").replace(",", ".")
+            else:
+                texto = texto.replace(",", "")
+        elif "," in texto:
+            texto = texto.replace(",", ".")
+        try:
+            return float(texto)
+        except ValueError:
+            return padrao
+
+    desconto = max(0.0, round(_parse_decimal(payload.get("desconto"), 0.0), 2))
+    valor_pago = max(0.0, round(_parse_decimal(payload.get("valor_pago"), 0.0), 2))
 
     status_producao = str(payload.get("status_producao") or "PENDENTE").strip().upper()
     status_pagamento = str(payload.get("status_pagamento") or "PENDENTE").strip().upper()
@@ -160,7 +176,7 @@ async def salvar_pedido(
     usuario_nome = str(payload.get("usuario_nome") or user or "Sistema").strip()
     imagens_mantidas = payload.get("imagens_mantidas") or []
 
-    # Calcula subtotal real a partir dos itens validados
+    # Calcula subtotal real a partir dos itens validados (suportando quantidades e valores decimais)
     itens_processados = []
     subtotal_calculado = 0.0
     for item in produtos:
@@ -168,14 +184,9 @@ async def salvar_pedido(
             prod_id = int(item.get("produto_id")) if item.get("produto_id") else None
         except (TypeError, ValueError):
             prod_id = None
-        try:
-            qtd = max(1, int(float(item.get("quantidade") or 1)))
-        except (TypeError, ValueError):
-            qtd = 1
-        try:
-            preco_unit = max(0.0, float(item.get("preco_unitario") or 0.0))
-        except (TypeError, ValueError):
-            preco_unit = 0.0
+
+        qtd = max(0.01, round(_parse_decimal(item.get("quantidade"), 1.0), 4))
+        preco_unit = max(0.0, round(_parse_decimal(item.get("preco_unitario"), 0.0), 4))
 
         nome_prod = str(item.get("nome_produto") or "").strip()
         obs_item = str(item.get("observacao") or "").strip()

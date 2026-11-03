@@ -13,10 +13,31 @@ UPLOAD_DIR = "static/uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
+def _parse_decimal(valor, padrao: float = 0.0) -> float:
+    if valor is None or valor == "":
+        return padrao
+    if isinstance(valor, (int, float)):
+        return float(valor)
+    texto = str(valor).strip().replace("R$", "").replace(" ", "")
+    if not texto:
+        return padrao
+    if "," in texto and "." in texto:
+        if texto.rfind(",") > texto.rfind("."):
+            texto = texto.replace(".", "").replace(",", ".")
+        else:
+            texto = texto.replace(",", "")
+    elif "," in texto:
+        texto = texto.replace(",", ".")
+    try:
+        return float(texto)
+    except ValueError:
+        return padrao
+
+
 class ItemOrcamentoSchema(BaseModel):
     produto_id: int
-    quantidade: float = 1.0
-    preco_unitario: float = 0.0
+    quantidade: float | str = 1.0
+    preco_unitario: float | str = 0.0
     observacao: Optional[str] = ""
 
 
@@ -25,7 +46,7 @@ class OrcamentoDadosSchema(BaseModel):
     usuario: Optional[str] = "Sistema"
     atendente: Optional[str] = "Sistema"
     status_producao: Optional[str] = "ORCAMENTO"
-    desconto: Optional[float] = 0.0
+    desconto: Optional[float | str] = 0.0
     observacao: Optional[str] = ""
     itens: List[ItemOrcamentoSchema]
 
@@ -131,8 +152,11 @@ async def criar_orcamento(
         cursor = conn.cursor()
         data_atual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        subtotal_geral = sum(max(1.0, float(item.quantidade or 1)) * max(0.0, float(item.preco_unitario or 0)) for item in dados_orcamento.itens)
-        desconto_val = max(0.0, float(dados_orcamento.desconto or 0.0))
+        subtotal_geral = sum(
+            round(max(0.01, round(_parse_decimal(item.quantidade, 1.0), 4)) * max(0.0, round(_parse_decimal(item.preco_unitario, 0.0), 4)), 2)
+            for item in dados_orcamento.itens
+        )
+        desconto_val = max(0.0, round(_parse_decimal(dados_orcamento.desconto, 0.0), 2))
         valor_total_liquido = round(max(0.0, subtotal_geral - desconto_val), 2)
 
         usuario_responsavel = (dados_orcamento.usuario or dados_orcamento.atendente or user or "Sistema").strip()
@@ -156,8 +180,8 @@ async def criar_orcamento(
         orcamento_id = cursor.lastrowid
 
         for item in dados_orcamento.itens:
-            qtd = max(1, int(round(float(item.quantidade or 1))))
-            preco_unit = max(0.0, float(item.preco_unitario or 0.0))
+            qtd = max(0.01, round(_parse_decimal(item.quantidade, 1.0), 4))
+            preco_unit = max(0.0, round(_parse_decimal(item.preco_unitario, 0.0), 4))
             subtotal_item = round(qtd * preco_unit, 2)
             obs_item = (item.observacao or "").strip()
 

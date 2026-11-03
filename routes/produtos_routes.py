@@ -6,10 +6,31 @@ from controllers.produto_controller import ProdutoController
 router = APIRouter()
 
 
+def _parse_decimal(valor, padrao: float = 0.0) -> float:
+    if valor is None or valor == "":
+        return padrao
+    if isinstance(valor, (int, float)):
+        return float(valor)
+    texto = str(valor).strip().replace("R$", "").replace(" ", "")
+    if not texto:
+        return padrao
+    if "," in texto and "." in texto:
+        if texto.rfind(",") > texto.rfind("."):
+            texto = texto.replace(".", "").replace(",", ".")
+        else:
+            texto = texto.replace(",", "")
+    elif "," in texto:
+        texto = texto.replace(",", ".")
+    try:
+        return float(texto)
+    except ValueError:
+        return padrao
+
+
 class ProdutoSchema(BaseModel):
     nome: str
-    preco_venda: float = 0.0
-    quantidade: int = 0
+    preco_venda: float | str = 0.0
+    quantidade: float | str = 0.0
 
 
 @router.get("/api/produtos")
@@ -33,8 +54,8 @@ def criar_produto(p: ProdutoSchema, user: str = Depends(auth_required)):
     try:
         ProdutoController.salvar(
             nome=nome,
-            preco_venda=max(0.0, float(p.preco_venda or 0.0)),
-            quantidade=max(0, int(p.quantidade or 0))
+            preco_venda=max(0.0, round(_parse_decimal(p.preco_venda, 0.0), 4)),
+            quantidade=max(0.0, round(_parse_decimal(p.quantidade, 0.0), 4))
         )
         return {"status": "ok", "sucesso": True}
     except Exception as e:
@@ -51,8 +72,8 @@ def atualizar_produto(produto_id: int, p: ProdutoSchema, user: str = Depends(aut
         ProdutoController.atualizar(
             p_id=produto_id,
             nome=nome,
-            preco_venda=max(0.0, float(p.preco_venda or 0.0)),
-            quantidade=max(0, int(p.quantidade or 0))
+            preco_venda=max(0.0, round(_parse_decimal(p.preco_venda, 0.0), 4)),
+            quantidade=max(0.0, round(_parse_decimal(p.quantidade, 0.0), 4))
         )
         return {"status": "ok", "sucesso": True}
     except Exception as e:

@@ -33,7 +33,7 @@ def init_db():
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nome TEXT NOT NULL,
                 preco_venda REAL DEFAULT 0.0,
-                quantidade INTEGER DEFAULT 0
+                quantidade REAL DEFAULT 0.0
             )
         """)
 
@@ -83,7 +83,7 @@ def init_db():
                 pedido_id INTEGER NOT NULL,
                 produto_id INTEGER,
                 nome_produto TEXT NOT NULL,
-                quantidade INTEGER NOT NULL,
+                quantidade REAL NOT NULL,
                 preco_unitario REAL NOT NULL,
                 subtotal REAL NOT NULL,
                 observacao TEXT DEFAULT '',

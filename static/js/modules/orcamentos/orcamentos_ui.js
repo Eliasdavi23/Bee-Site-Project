@@ -119,11 +119,11 @@ export function construirLinhaProduto(produtos, obsInicial = "") {
             <div class="flex items-end gap-2 w-full sm:w-auto justify-end">
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Qtd</label>
-                    <input type="number" min="1" value="1" title="Quantidade" class="prod-qtd w-20 bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-2 py-2 text-xs text-center outline-none focus:border-amber-400" oninput="calcularTotalOrcamento()">
+                    <input type="number" step="any" min="0.01" value="1" title="Quantidade" class="prod-qtd w-20 bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-2 py-2 text-xs text-center outline-none focus:border-amber-400" oninput="calcularTotalOrcamento()">
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Valor Unit. (R$)</label>
-                    <input type="number" step="0.01" min="0" value="0.00" title="Preço Unitário" placeholder="0.00" class="prod-preco w-28 bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-2 py-2 text-xs text-right outline-none focus:border-amber-400" oninput="calcularTotalOrcamento()">
+                    <input type="number" step="any" min="0" value="0.00" title="Preço Unitário" placeholder="0.00" class="prod-preco w-28 bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-2 py-2 text-xs text-right outline-none focus:border-amber-400" oninput="calcularTotalOrcamento()">
                 </div>
                 <button type="button" onclick="this.closest('.linha-orc-item').remove(); window.calcularTotalOrcamento();" class="p-2 bg-slate-950 hover:bg-rose-950 text-rose-400 border border-slate-800 rounded-lg font-bold cursor-pointer">✕</button>
             </div>

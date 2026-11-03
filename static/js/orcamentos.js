@@ -1,8 +1,26 @@
 // ==========================================
 // IMPORTAÇÕES
 // ==========================================
-import * as api from './modules/orcamentos/orcamentos_api.js';
-import * as ui from './modules/orcamentos/orcamentos_ui.js';
+import * as api from './modules/orcamentos/orcamentos_api.js?v=2026d';
+import * as ui from './modules/orcamentos/orcamentos_ui.js?v=2026d';
+
+function lerDecimal(valor, padrao = 0) {
+    if (valor === null || valor === undefined || valor === "") return padrao;
+    if (typeof valor === "number") return Number.isFinite(valor) ? valor : padrao;
+    let texto = String(valor).trim().replace(/R\$\s?/gi, "").replace(/\s+/g, "");
+    if (!texto) return padrao;
+    if (texto.includes(",") && texto.includes(".")) {
+        if (texto.lastIndexOf(",") > texto.lastIndexOf(".")) {
+            texto = texto.replace(/\./g, "").replace(",", ".");
+        } else {
+            texto = texto.replace(/,/g, "");
+        }
+    } else if (texto.includes(",")) {
+        texto = texto.replace(",", ".");
+    }
+    const num = parseFloat(texto);
+    return Number.isFinite(num) ? num : padrao;
+}
 
 let estado = {
     orcamentos: [],
@@ -324,8 +342,8 @@ async function salvarOrcamento() {
             prodBusca?.dataset?.id ||
             prodBusca?.getAttribute('data-id');
 
-        const qtd = Math.max(1, parseFloat(row.querySelector('.prod-qtd')?.value) || 1);
-        const preco = Math.max(0, parseFloat(row.querySelector('.prod-preco')?.value) || 0);
+        const qtd = Math.max(0.01, lerDecimal(row.querySelector('.prod-qtd')?.value, 1));
+        const preco = Math.max(0, lerDecimal(row.querySelector('.prod-preco')?.value, 0));
         const obs = (row.querySelector('.prod-obs')?.value || "").trim();
 
         if (prodId && prodId !== "") {
@@ -349,7 +367,7 @@ async function salvarOrcamento() {
             usuario: usuarioAtendente,
             atendente: usuarioAtendente,
             status_producao: 'ORCAMENTO',
-            desconto: Math.max(0, parseFloat(document.getElementById("orc-desconto")?.value) || 0),
+            desconto: Math.max(0, lerDecimal(document.getElementById("orc-desconto")?.value, 0)),
             observacao: document.getElementById("orc-observacao")?.value || "",
             itens: itens
         }
@@ -561,12 +579,12 @@ window.calcularTotalOrcamento = () => {
     const linhas = document.querySelectorAll("#container-produtos-orc > div");
 
     linhas.forEach(row => {
-        const qtd = Math.max(0, parseFloat(row.querySelector('.prod-qtd')?.value) || 0);
-        const preco = Math.max(0, parseFloat(row.querySelector('.prod-preco')?.value) || 0);
+        const qtd = Math.max(0, lerDecimal(row.querySelector('.prod-qtd')?.value, 0));
+        const preco = Math.max(0, lerDecimal(row.querySelector('.prod-preco')?.value, 0));
         subtotal += (qtd * preco);
     });
 
-    const desconto = Math.max(0, parseFloat(document.getElementById("orc-desconto")?.value) || 0);
+    const desconto = Math.max(0, lerDecimal(document.getElementById("orc-desconto")?.value, 0));
     const totalGeral = Math.max(0, subtotal - desconto);
 
     const lbl = document.getElementById("lbl-total-orc");

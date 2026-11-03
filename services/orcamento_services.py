@@ -34,13 +34,38 @@ def buscar_orcamento_por_id_db(orcamento_id: int):
         conn.close()
 
 
+def _parse_decimal(valor, padrao: float = 0.0) -> float:
+    if valor is None or valor == "":
+        return padrao
+    if isinstance(valor, (int, float)):
+        return float(valor)
+    texto = str(valor).strip().replace("R$", "").replace(" ", "")
+    if not texto:
+        return padrao
+    if "," in texto and "." in texto:
+        if texto.rfind(",") > texto.rfind("."):
+            texto = texto.replace(".", "").replace(",", ".")
+        else:
+            texto = texto.replace(",", "")
+    elif "," in texto:
+        texto = texto.replace(",", ".")
+    try:
+        return float(texto)
+    except ValueError:
+        return padrao
+
+
 def atualizar_orcamento_db(orcamento_id: int, dados, usuario_responsavel: str):
     conn = get_connection()
     try:
         cursor = conn.cursor()
 
-        subtotal_geral = sum(max(1.0, float(item.quantidade or 1)) * max(0.0, float(item.preco_unitario or 0)) for item in dados.itens)
-        valor_total_liquido = round(max(0.0, subtotal_geral - float(dados.desconto or 0.0)), 2)
+        subtotal_geral = sum(
+            round(max(0.01, round(_parse_decimal(item.quantidade, 1.0), 4)) * max(0.0, round(_parse_decimal(item.preco_unitario, 0.0), 4)), 2)
+            for item in dados.itens
+        )
+        desconto_limpo = max(0.0, round(_parse_decimal(dados.desconto, 0.0), 2))
+        valor_total_liquido = round(max(0.0, subtotal_geral - desconto_limpo), 2)
 
         cursor.execute("""
             UPDATE pedidos 
@@ -49,7 +74,7 @@ def atualizar_orcamento_db(orcamento_id: int, dados, usuario_responsavel: str):
         """, (
             dados.cliente_id,
             valor_total_liquido,
-            float(dados.desconto or 0.0),
+            desconto_limpo,
             (dados.observacao or "").strip(),
             usuario_responsavel,
             orcamento_id
@@ -58,8 +83,8 @@ def atualizar_orcamento_db(orcamento_id: int, dados, usuario_responsavel: str):
         cursor.execute("DELETE FROM itens_pedido WHERE pedido_id = ?", (orcamento_id,))
 
         for item in dados.itens:
-            qtd = max(1, int(round(float(item.quantidade or 1))))
-            preco_unit = max(0.0, float(item.preco_unitario or 0.0))
+            qtd = max(0.01, round(_parse_decimal(item.quantidade, 1.0), 4))
+            preco_unit = max(0.0, round(_parse_decimal(item.preco_unitario, 0.0), 4))
             subtotal_item = round(qtd * preco_unit, 2)
             obs_item = (getattr(item, "observacao", "") or "").strip()
 

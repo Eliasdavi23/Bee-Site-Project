@@ -1,6 +1,24 @@
 // IMPORTAÇÕES (API e Interface Visual)
-import * as api from './modules/pedidos/pedidos_api.js';
-import * as ui from './modules/pedidos/pedidos_ui.js';
+import * as api from './modules/pedidos/pedidos_api.js?v=2026d';
+import * as ui from './modules/pedidos/pedidos_ui.js?v=2026d';
+
+function lerDecimal(valor, padrao = 0) {
+    if (valor === null || valor === undefined || valor === "") return padrao;
+    if (typeof valor === "number") return Number.isFinite(valor) ? valor : padrao;
+    let texto = String(valor).trim().replace(/R\$\s?/gi, "").replace(/\s+/g, "");
+    if (!texto) return padrao;
+    if (texto.includes(",") && texto.includes(".")) {
+        if (texto.lastIndexOf(",") > texto.lastIndexOf(".")) {
+            texto = texto.replace(/\./g, "").replace(",", ".");
+        } else {
+            texto = texto.replace(/,/g, "");
+        }
+    } else if (texto.includes(",")) {
+        texto = texto.replace(",", ".");
+    }
+    const num = parseFloat(texto);
+    return Number.isFinite(num) ? num : padrao;
+}
 
 // ESTADO GLOBAL DA TELA
 let estado = {
@@ -106,8 +124,8 @@ window.filtrarPorStatusRapido = filtrarPorStatusRapido;
 function obterTotalAtual() {
     let subtotal = 0;
     document.querySelectorAll(".linha-prod-item").forEach(l => {
-        const qtd = Math.max(0, parseFloat(l.querySelector(".inp-qtd")?.value) || 0);
-        const preco = Math.max(0, parseFloat(l.querySelector(".inp-preco")?.value) || 0);
+        const qtd = Math.max(0, lerDecimal(l.querySelector(".inp-qtd")?.value, 0));
+        const preco = Math.max(0, lerDecimal(l.querySelector(".inp-preco")?.value, 0));
         const subItem = qtd * preco;
         subtotal += subItem;
 
@@ -117,7 +135,7 @@ function obterTotalAtual() {
         }
     });
 
-    const desconto = Math.max(0, parseFloat(document.getElementById("ped-desconto")?.value) || 0);
+    const desconto = Math.max(0, lerDecimal(document.getElementById("ped-desconto")?.value, 0));
     return Math.max(0, subtotal - desconto);
 }
 
@@ -182,8 +200,8 @@ async function salvarPedido(irParaImpressao = false) {
         const prodId = l.querySelector(".sel-produto")?.value;
         const nomeInput = (l.querySelector(".inp-nome-prod")?.value || l.querySelector("input[type='text']")?.value || "").trim();
         const obsItem = (l.querySelector(".inp-obs-item")?.value || "").trim();
-        const qtd = Math.max(1, parseInt(l.querySelector(".inp-qtd")?.value, 10) || 1);
-        const preco = Math.max(0, parseFloat(l.querySelector(".inp-preco")?.value) || 0);
+        const qtd = Math.max(0.01, lerDecimal(l.querySelector(".inp-qtd")?.value, 1));
+        const preco = Math.max(0, lerDecimal(l.querySelector(".inp-preco")?.value, 0));
 
         if (prodId || nomeInput) {
             produtos.push({
@@ -206,11 +224,11 @@ async function salvarPedido(irParaImpressao = false) {
         cliente_id: parseInt(clienteId, 10),
         usuario_nome: document.getElementById("ped-usuario").value || "Sistema",
         valor_total: window.calcularTotalGlobal(),
-        desconto: Math.max(0, parseFloat(document.getElementById("ped-desconto").value) || 0),
+        desconto: Math.max(0, lerDecimal(document.getElementById("ped-desconto").value, 0)),
         status_producao: document.getElementById("ped-producao").value,
         status_pagamento: document.getElementById("ped-pagamento").value,
         forma_pagamento: document.getElementById("ped-forma-pagamento").value,
-        valor_pago: Math.max(0, parseFloat(document.getElementById("ped-vpago").value) || 0),
+        valor_pago: Math.max(0, lerDecimal(document.getElementById("ped-vpago").value, 0)),
         observacao: document.getElementById("ped-observacao").value,
         produtos: produtos,
         imagens_mantidas: estado.imagensExistentes

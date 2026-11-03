@@ -3,6 +3,24 @@ import * as ui from './modules/produtos/produtos_ui.js';
 
 let listaProdutos = [];
 
+function lerDecimal(valor, padrao = 0) {
+    if (valor === null || valor === undefined || valor === "") return padrao;
+    if (typeof valor === "number") return Number.isFinite(valor) ? valor : padrao;
+    let texto = String(valor).trim().replace(/R\$\s?/gi, "").replace(/\s+/g, "");
+    if (!texto) return padrao;
+    if (texto.includes(",") && texto.includes(".")) {
+        if (texto.lastIndexOf(",") > texto.lastIndexOf(".")) {
+            texto = texto.replace(/\./g, "").replace(",", ".");
+        } else {
+            texto = texto.replace(/,/g, "");
+        }
+    } else if (texto.includes(",")) {
+        texto = texto.replace(",", ".");
+    }
+    const num = parseFloat(texto);
+    return Number.isFinite(num) ? num : padrao;
+}
+
 document.addEventListener('DOMContentLoaded', carregarProdutos);
 
 async function carregarProdutos() {
@@ -28,8 +46,8 @@ async function salvarProduto(event) {
     const id = document.getElementById('produto-id').value;
     const payload = {
         nome: document.getElementById('produto-nome').value,
-        preco_venda: parseFloat(document.getElementById('produto-preco').value),
-        quantidade: parseInt(document.getElementById('produto-quantidade').value, 10) || 0
+        preco_venda: Math.max(0, lerDecimal(document.getElementById('produto-preco').value, 0)),
+        quantidade: Math.max(0, lerDecimal(document.getElementById('produto-quantidade').value, 0))
     };
     try {
         await api.salvarProduto(id, payload);

@@ -182,3 +182,100 @@ def test_fluxo_completo_multiplos_pedidos_com_observacoes_por_item():
     deletar_pedido(pedido_1_id, user="admin")
     deletar_pedido(orc_id, user="admin")
     excluir_cliente(cliente_id, user="admin")
+
+
+def test_pedidos_e_orcamentos_com_numeros_decimais():
+    """Valida que quantidades decimais (ex: 1.5, 0.75) e valores/descontos decimais com ponto ou vírgula salvam com exatidão."""
+    init_db()
+
+    res_cli = criar_cliente(ClienteSchema(
+        nome="Cliente Decimal Teste",
+        documento="000.000.000-00",
+        telefone="(11) 90000-0000"
+    ), user="admin")
+    cliente_id = res_cli["id"]
+
+    criar_produto(ProdutoSchema(nome="Adesivo Vinil m2", preco_venda="45,50", quantidade="12,5"), user="admin")
+    prod = next(p for p in listar_produtos(user="admin") if p["nome"] == "Adesivo Vinil m2")
+    assert abs(prod["preco_venda"] - 45.50) < 0.001
+    assert abs(prod["quantidade"] - 12.5) < 0.001
+
+    payload_decimal = {
+        "id": None,
+        "cliente_id": cliente_id,
+        "usuario_nome": "Davi",
+        "desconto": "2,75",
+        "status_producao": "PENDENTE",
+        "status_pagamento": "PARCIAL",
+        "forma_pagamento": "Pix",
+        "valor_pago": "30,50",
+        "observacao": "Pedido com medidas e valores fracionados",
+        "produtos": [
+            {
+                "produto_id": prod["id"],
+                "nome_produto": prod["nome"],
+                "quantidade": "1,5",
+                "preco_unitario": "45,50",
+                "observacao": "1,5 m² de adesivo recorte"
+            },
+            {
+                "produto_id": prod["id"],
+                "nome_produto": "Lona Fracionada",
+                "quantidade": 0.75,
+                "preco_unitario": 80.25,
+                "observacao": "0,75 m²"
+            }
+        ],
+        "imagens_mantidas": []
+    }
+
+    res_ped = asyncio.run(salvar_pedido(dados=json.dumps(payload_decimal), imagens=[], user="admin"))
+    assert res_ped["sucesso"] is True
+    ped_id = res_ped["id"]
+
+    itens = listar_itens_pedido(ped_id, user="admin")
+    assert len(itens) == 2
+    assert abs(itens[0]["quantidade"] - 1.5) < 0.001
+    assert abs(itens[0]["preco_unitario"] - 45.50) < 0.001
+    assert abs(itens[0]["subtotal"] - 68.25) < 0.01
+
+    assert abs(itens[1]["quantidade"] - 0.75) < 0.001
+    assert abs(itens[1]["preco_unitario"] - 80.25) < 0.001
+    assert abs(itens[1]["subtotal"] - 60.19) < 0.01
+
+    ped_salvo = next(p for p in listar_pedidos(user="admin") if p["id"] == ped_id)
+    # 68.25 + 60.19 - 2.75 = 125.69
+    assert abs(ped_salvo["valor_total"] - 125.69) < 0.01
+    assert abs(ped_salvo["desconto"] - 2.75) < 0.01
+    assert abs(ped_salvo["valor_pago"] - 30.50) < 0.01
+
+    # Também valida orçamento com quantidade e preço decimais
+    res_orc = asyncio.run(criar_orcamento(
+        payload=OrcamentoCreateSchema(
+            dados=OrcamentoDadosSchema(
+                cliente_id=cliente_id,
+                usuario="Davi",
+                desconto="1,25",
+                observacao="Orçamento decimal",
+                itens=[
+                    ItemOrcamentoSchema(
+                        produto_id=prod["id"],
+                        quantidade="2,5",
+                        preco_unitario="19,90",
+                        observacao="2,5 metros"
+                    )
+                ]
+            )
+        ),
+        user="admin"
+    ))
+    assert res_orc["sucesso"] is True
+    orc_id = res_orc["id"]
+    orc_db = obter_orcamento(orc_id, user="admin")
+    assert abs(orc_db["itens"][0]["quantidade"] - 2.5) < 0.001
+    assert abs(orc_db["itens"][0]["preco_unitario"] - 19.90) < 0.001
+    assert abs(orc_db["valor_total"] - (round(2.5 * 19.90, 2) - 1.25)) < 0.01
+
+    deletar_pedido(ped_id, user="admin")
+    deletar_pedido(orc_id, user="admin")
+    excluir_cliente(cliente_id, user="admin")
