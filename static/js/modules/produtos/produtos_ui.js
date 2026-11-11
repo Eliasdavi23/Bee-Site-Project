@@ -1,3 +1,5 @@
+// static/js/modules/produtos/produtos_ui.js
+
 export function renderizarTabelaProdutos(dados) {
     const tbody = document.getElementById('tabela-produtos-body');
     const count = document.getElementById('total-produtos-count');
@@ -5,14 +7,27 @@ export function renderizarTabelaProdutos(dados) {
     if (!tbody) return;
 
     if (!dados.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="p-6 text-center text-slate-500">Nenhum produto cadastrado.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-zinc-500 text-sm">Nenhum produto cadastrado no estoque.</td></tr>';
         return;
     }
 
     tbody.innerHTML = dados.map(p => {
         const preco = Number(p.preco_venda || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         const json = JSON.stringify(p).replace(/"/g, '&quot;');
-        return `<tr class="hover:bg-slate-900/50 transition border-b border-slate-800/60"><td class="p-4 font-bold text-amber-400">#${p.id}</td><td class="p-4 font-bold text-slate-100">${p.nome}</td><td class="p-4 text-emerald-400 font-bold">${preco}</td><td class="p-4 text-slate-300 font-medium">${p.quantidade || 0} un</td><td class="p-4 text-center"><div class="flex items-center justify-center gap-2"><button onclick='editarProduto(${json})' class="p-2 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-lg text-xs font-bold transition cursor-pointer">Editar</button><button onclick="excluirProduto(${p.id})" class="p-2 bg-slate-800 hover:bg-rose-950 text-rose-400 rounded-lg text-xs font-bold transition cursor-pointer">Excluir</button></div></td></tr>`;
+        return `
+            <tr class="hover:bg-zinc-800/50 transition border-b border-zinc-800/80">
+                <td class="p-4 font-black text-yellow-400">#${p.id}</td>
+                <td class="p-4 font-bold text-white">${p.nome}</td>
+                <td class="p-4 text-emerald-400 font-black">${preco}</td>
+                <td class="p-4 text-zinc-300 font-medium">${p.quantidade || 0} un</td>
+                <td class="p-4 text-center">
+                    <div class="flex items-center justify-center gap-2">
+                        <button onclick='editarProduto(${json})' class="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-yellow-400 border border-zinc-700/60 rounded-lg text-xs font-bold transition cursor-pointer">Editar</button>
+                        <button onclick="excluirProduto(${p.id})" class="px-3 py-1.5 bg-zinc-800 hover:bg-rose-950 text-rose-400 border border-zinc-700/60 rounded-lg text-xs font-bold transition cursor-pointer">Excluir</button>
+                    </div>
+                </td>
+            </tr>
+        `;
     }).join('');
 }
 

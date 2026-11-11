@@ -1,20 +1,28 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard Executivo - Sistema da Empresa{% endblock %}
+{% block title %}Painel Analítico Executivo — Bee Gráfica{% endblock %}
 
 {% block content %}
-<div class="p-8 space-y-8 bg-slate-950 w-full min-h-screen text-slate-100 pb-16">
+<div class="p-6 md:p-8 space-y-8 bg-black w-full min-h-screen text-white pb-16">
 
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-800 pb-4 gap-4">
+    <!-- CABEÇALHO DO PAINEL + FILTROS DE PERÍODO -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-zinc-800 pb-6 gap-4">
         <div>
-            <h1 class="text-3xl font-black text-amber-400 tracking-wide flex items-center gap-3">
-                📊 DASHBOARD EXECUTIVO
-            </h1>
-            <p class="text-sm text-slate-400 mt-1">Visão geral de desempenho, vendas e linha de produção em tempo real.</p>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-yellow-400/10 border border-yellow-400/20 flex items-center justify-center text-yellow-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black text-white tracking-tight">PAINEL ANALÍTICO EXECUTIVO</h1>
+                    <p class="text-xs text-zinc-400 mt-0.5">Visão consolidada de desempenho, vendas e esteira de produção em tempo real.</p>
+                </div>
+            </div>
         </div>
 
-        <div class="flex items-center gap-2 flex-wrap w-full md:w-auto justify-end">
-            <select id="dash-filtro-periodo" onchange="toggleDataInputDashboard()" class="h-11 min-w-[180px] w-full sm:w-auto bg-slate-900 border border-slate-700 text-slate-200 text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:border-amber-400 transition cursor-pointer">
+        <div class="flex items-center gap-2.5 flex-wrap w-full md:w-auto justify-end">
+            <select id="dash-filtro-periodo" onchange="toggleDataInputDashboard()" class="h-11 min-w-[170px] w-full sm:w-auto bg-black border border-zinc-800 text-zinc-200 text-xs font-semibold rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition cursor-pointer">
                 <option value="mes_atual" selected>Este Mês</option>
                 <option value="mes_anterior">Mês Anterior</option>
                 <option value="7_dias">Últimos 7 Dias</option>
@@ -22,101 +30,156 @@
                 <option value="dia_especifico">Dia Específico</option>
             </select>
 
-            <input type="date" id="dash-data-especifica" class="hidden h-11 min-w-[180px] w-full sm:w-auto bg-slate-900 border border-slate-700 text-slate-200 text-sm font-medium rounded-xl px-4 py-2.5 outline-none focus:border-amber-400 transition" />
+            <input type="date" id="dash-data-especifica" class="hidden h-11 min-w-[170px] w-full sm:w-auto bg-black border border-zinc-800 text-zinc-200 text-xs font-semibold rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition" />
 
-            <button onclick="atualizarDashboard()" class="h-11 min-w-[140px] justify-center bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-4 py-2.5 rounded-xl border border-slate-700 transition flex items-center gap-2">
-                🔄 Atualizar
+            <button onclick="atualizarDashboard()" class="h-11 min-w-[130px] justify-center bg-yellow-400 hover:bg-yellow-300 text-black text-xs font-bold px-4 py-2.5 rounded-lg shadow-lg shadow-yellow-500/20 transition flex items-center gap-2 cursor-pointer">
+                <svg class="w-4 h-4 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                <span>Atualizar</span>
             </button>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl relative overflow-hidden shadow-xl">
-            <div class="flex justify-between items-start">
-                <div>
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Faturamento Total</span>
-                    <p id="dash-faturamento" class="text-3xl font-black text-emerald-400 mt-1">R$ 0,00</p>
-                </div>
-                <div class="p-3 bg-emerald-950/60 border border-emerald-800/50 rounded-xl text-emerald-400 text-xl">
-                    💰
-                </div>
-            </div>
-            <p class="text-xs text-slate-500 mt-3 flex items-center gap-1">
-                <span class="text-emerald-400 font-bold">●</span> Total de pedidos gerados no período
+    <!-- BANNER DE BOAS-VINDAS HERO (DESIGN SYSTEM PRETO & AMARELO) -->
+    <div class="bg-gradient-to-r from-zinc-900 via-zinc-900 to-black border border-zinc-800 rounded-2xl p-8 relative overflow-hidden shadow-2xl">
+        <div class="relative z-10 max-w-2xl">
+            <span class="inline-flex items-center gap-2 px-3 py-1 bg-yellow-400/10 border border-yellow-400/30 rounded-full text-[11px] font-bold text-yellow-400 mb-3 tracking-wide">
+                <span class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></span>
+                SISTEMA OPERACIONAL ATIVO
+            </span>
+            <h2 class="text-3xl font-extrabold text-white tracking-tight">
+                Bem-vindo de volta, {{ user or 'Davi Elias' }}!
+            </h2>
+            <p class="text-sm text-zinc-400 mt-2 leading-relaxed">
+                Acompanhe as ordens de serviço ativas, controle os orçamentos e gerencie os atendimentos integrados ao WhatsApp em tempo real.
             </p>
+            <div class="flex items-center gap-3 mt-6 flex-wrap">
+                <a href="/pedidos" class="bg-yellow-400 hover:bg-yellow-300 text-black text-xs font-bold px-5 py-3 rounded-lg shadow-lg shadow-yellow-500/20 transition">
+                    Ver Fila de Pedidos
+                </a>
+                <a href="/atendimento" class="bg-zinc-800 hover:bg-zinc-700 border border-zinc-700/60 text-white text-xs font-semibold px-5 py-3 rounded-lg transition">
+                    Central WhatsApp
+                </a>
+            </div>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl relative overflow-hidden shadow-xl">
-            <div class="flex justify-between items-start">
-                <div>
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pedidos Realizados</span>
-                    <p id="dash-total-pedidos" class="text-3xl font-black text-amber-400 mt-1">0</p>
-                </div>
-                <div class="p-3 bg-amber-950/60 border border-amber-800/50 rounded-xl text-amber-400 text-xl">
-                    📦
-                </div>
-            </div>
-            <p class="text-xs text-slate-500 mt-3 flex items-center gap-1">
-                <span id="dash-ticket-medio" class="text-amber-400 font-bold">R$ 0,00</span> Ticket Média / Pedido
-            </p>
-        </div>
-
-        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl relative overflow-hidden shadow-xl">
-            <div class="flex justify-between items-start">
-                <div>
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Fila de Produção</span>
-                    <p id="dash-em-producao" class="text-3xl font-black text-blue-400 mt-1">0</p>
-                </div>
-                <div class="p-3 bg-blue-950/60 border border-blue-800/50 rounded-xl text-blue-400 text-xl">
-                    ⚙️
-                </div>
-            </div>
-            <p class="text-xs text-slate-500 mt-3 flex items-center gap-1">
-                Pedidos em produção ou aguardando
-            </p>
-        </div>
-
-        <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl relative overflow-hidden shadow-xl">
-            <div class="flex justify-between items-start">
-                <div>
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Saldo Pendente</span>
-                    <p id="dash-a-receber" class="text-3xl font-black text-rose-400 mt-1">R$ 0,00</p>
-                </div>
-                <div class="p-3 bg-rose-950/60 border border-rose-800/50 rounded-xl text-rose-400 text-xl">
-                    ⚠️
-                </div>
-            </div>
-            <p class="text-xs text-slate-500 mt-3 flex items-center gap-1">
-                Valores a receber de clientes
-            </p>
-        </div>
+        <div class="absolute -right-8 -bottom-8 w-64 h-64 bg-yellow-500/5 rounded-full blur-3xl pointer-events-none"></div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        <div class="lg:col-span-2 bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-6 shadow-xl">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h2 class="text-lg font-bold text-slate-200">💳 Distribuição por Recebimento</h2>
-                <span class="text-xs bg-slate-800 text-slate-400 px-3 py-1 rounded-full border border-slate-700">Formas de Pagamento</span>
-            </div>
+    <!-- GRID DE CARDS PRINCIPAIS DE MÉTRICAS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
-            <div id="container-pagamentos-progresso" class="space-y-4">
+        <!-- CARD 1: Faturamento Total -->
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl relative overflow-hidden shadow-xl hover:border-zinc-700 transition duration-200">
+            <div class="flex justify-between items-start">
+                <div>
+                    <span class="text-xs font-bold text-zinc-400 uppercase tracking-wider">Faturamento Confirmado</span>
+                    <p id="dash-faturamento" class="text-3xl font-black text-emerald-400 mt-2">R$ 0,00</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center gap-1.5 text-xs text-zinc-400">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                <span>Pedidos quitados e faturados no período</span>
             </div>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-6 shadow-xl">
-            <div class="border-b border-slate-800 pb-3">
-                <h2 class="text-lg font-bold text-slate-200">🏆 Destaques do Mês</h2>
+        <!-- CARD 2: Pedidos Realizados -->
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl relative overflow-hidden shadow-xl hover:border-zinc-700 transition duration-200">
+            <div class="flex justify-between items-start">
+                <div>
+                    <span class="text-xs font-bold text-zinc-400 uppercase tracking-wider">Pedidos Emitidos</span>
+                    <p id="dash-total-pedidos" class="text-3xl font-black text-white mt-2">0</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-yellow-400/10 border border-yellow-400/20 flex items-center justify-center text-yellow-400 shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between text-xs text-zinc-400">
+                <span>Ticket Médio:</span>
+                <span id="dash-ticket-medio" class="text-yellow-400 font-bold">R$ 0,00</span>
+            </div>
+        </div>
+
+        <!-- CARD 3: Fila de Produção -->
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl relative overflow-hidden shadow-xl hover:border-zinc-700 transition duration-200">
+            <div class="flex justify-between items-start">
+                <div>
+                    <span class="text-xs font-bold text-zinc-400 uppercase tracking-wider">Fila de Produção</span>
+                    <p id="dash-em-producao" class="text-3xl font-black text-yellow-400 mt-2">0</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-yellow-400/10 border border-yellow-400/20 flex items-center justify-center text-yellow-400 shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center gap-1.5 text-xs text-zinc-400">
+                <span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span>
+                <span>Ordens em impressão ou acabamento</span>
+            </div>
+        </div>
+
+        <!-- CARD 4: Saldo Pendente -->
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl relative overflow-hidden shadow-xl hover:border-zinc-700 transition duration-200">
+            <div class="flex justify-between items-start">
+                <div>
+                    <span class="text-xs font-bold text-zinc-400 uppercase tracking-wider">Saldo Pendente</span>
+                    <p id="dash-a-receber" class="text-3xl font-black text-rose-400 mt-2">R$ 0,00</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center gap-1.5 text-xs text-zinc-400">
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                <span>Valores restantes para quitação na entrega</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SEÇÃO INTERMEDIÁRIA: RECEBIMENTO + RANKINGS -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Distribuição por Recebimento -->
+        <div class="lg:col-span-2 bg-zinc-900 border border-zinc-800 p-6 rounded-2xl space-y-6 shadow-xl">
+            <div class="flex justify-between items-center border-b border-zinc-800 pb-4">
+                <div>
+                    <h2 class="text-base font-bold text-white">Distribuição por Recebimento</h2>
+                    <p class="text-xs text-zinc-400">Faturamento categorizado por meio de pagamento</p>
+                </div>
+                <span class="text-xs bg-black text-zinc-300 font-semibold px-3 py-1 rounded-lg border border-zinc-800">Meios de Pagamento</span>
+            </div>
+
+            <div id="container-pagamentos-progresso" class="space-y-4 pt-1">
+            </div>
+        </div>
+
+        <!-- Destaques do Período -->
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl space-y-6 shadow-xl">
+            <div class="border-b border-zinc-800 pb-4">
+                <h2 class="text-base font-bold text-white">Destaques do Período</h2>
+                <p class="text-xs text-zinc-400">Top performers e catálogo mais demandado</p>
             </div>
 
             <div>
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Top Atendentes</h3>
+                <h3 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3">Atendentes em Destaque</h3>
                 <div id="list-top-atendentes" class="space-y-3">
                 </div>
             </div>
 
-            <div class="pt-4 border-t border-slate-800/80">
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Produtos Mais Vendidos</h3>
+            <div class="pt-4 border-t border-zinc-800">
+                <h3 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-3">Produtos Mais Vendidos</h3>
                 <div id="list-top-produtos" class="space-y-3">
                 </div>
             </div>
@@ -124,35 +187,42 @@
 
     </div>
 
+    <!-- SEÇÃO INFERIOR: ÚLTIMOS PEDIDOS + STATUS DE PRODUÇÃO -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
-        <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl">
-            <div class="flex justify-between items-center">
-                <h2 class="text-lg font-bold text-slate-200">🕒 Últimos Pedidos</h2>
-                <a href="/pedidos" class="text-xs text-amber-400 hover:underline font-bold">Ver todos →</a>
+        <!-- Últimos Pedidos -->
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl space-y-4 shadow-xl">
+            <div class="flex justify-between items-center border-b border-zinc-800 pb-4">
+                <div>
+                    <h2 class="text-base font-bold text-white">Últimos Pedidos Registrados</h2>
+                    <p class="text-xs text-zinc-400">Entradas recentes no fluxo comercial</p>
+                </div>
+                <a href="/pedidos" class="text-xs text-yellow-400 hover:text-yellow-300 font-bold transition">Ver todos &rarr;</a>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-300">
-                    <thead class="bg-slate-950 text-slate-400 uppercase text-xs">
+                <table class="w-full text-left text-xs text-zinc-300">
+                    <thead class="bg-black text-zinc-400 uppercase font-semibold">
                         <tr>
-                            <th class="p-3">Cód.</th>
+                            <th class="p-3 rounded-l-lg">Cód.</th>
                             <th class="p-3">Cliente</th>
                             <th class="p-3">Total</th>
-                            <th class="p-3 text-center">Status</th>
+                            <th class="p-3 text-center rounded-r-lg">Status</th>
                         </tr>
                     </thead>
-                    <tbody id="tabela-dash-pedidos" class="divide-y divide-slate-800">
+                    <tbody id="tabela-dash-pedidos" class="divide-y divide-zinc-800/80 font-medium">
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-4 shadow-xl">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h2 class="text-lg font-bold text-slate-200 flex items-center gap-2">
-                    ⚙️ Status da Produção
-                </h2>
-                <a href="/pedidos" class="text-xs text-amber-400 hover:underline font-bold">Gerenciar Fila →</a>
+        <!-- Status da Produção -->
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl space-y-4 shadow-xl">
+            <div class="flex justify-between items-center border-b border-zinc-800 pb-4">
+                <div>
+                    <h2 class="text-base font-bold text-white">Status da Produção Gráfica</h2>
+                    <p class="text-xs text-zinc-400">Capacidade e distribuição das ordens ativas</p>
+                </div>
+                <a href="/pedidos" class="text-xs text-yellow-400 hover:text-yellow-300 font-bold transition">Gerenciar Fila &rarr;</a>
             </div>
             
             <div id="container-status-producao" class="space-y-3 pt-2">

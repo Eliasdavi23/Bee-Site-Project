@@ -1,3 +1,16 @@
+
+function normalizarStatusProducao(status) {
+    if (!status) return "PENDENTE";
+    return String(status)
+        .trim()
+        .toUpperCase()
+        .replace(/_/g, " ")
+        .replace(/\s+/g, " ")
+        .replace("EM PRODUÇÃO", "EM PRODUCAO")
+        .replace("ESPERANDO INSTALAÇÃO", "ESPERANDO INSTALACAO")
+        .replace("ORÇAMENTO", "ORCAMENTO");
+}
+window.normalizarStatusProducao = normalizarStatusProducao;
 // IMPORTAÇÕES (API e Interface Visual)
 import * as api from './modules/pedidos/pedidos_api.js?v=2026d';
 import * as ui from './modules/pedidos/pedidos_ui.js?v=2026d';
@@ -85,11 +98,21 @@ function alternarAbaPedidos(aba) {
         }
     };
 
+    const classesAtivas = ["bg-yellow-400", "text-black", "shadow-lg", "shadow-yellow-500/20", "font-bold"];
+    const classesInativas = ["text-zinc-400", "hover:text-white", "hover:bg-zinc-800", "font-semibold"];
+
     Object.entries(abas).forEach(([chave, elem]) => {
         const ativo = chave === aba;
         if (elem.btn) {
             elem.btn.classList.toggle("active", ativo);
             elem.btn.setAttribute("aria-selected", ativo ? "true" : "false");
+            if (ativo) {
+                elem.btn.classList.remove(...classesInativas);
+                elem.btn.classList.add(...classesAtivas);
+            } else {
+                elem.btn.classList.remove(...classesAtivas);
+                elem.btn.classList.add(...classesInativas);
+            }
         }
         if (elem.panel) {
             elem.panel.classList.toggle("active", ativo);
@@ -170,11 +193,10 @@ function filtrarPedidos() {
             (p.observacao?.toLowerCase().includes(termo)) ||
             itensTexto.includes(termo);
 
-        const stProd = String(p.status_producao || "").toUpperCase()
-            .replace("EM PRODUÇÃO", "EM PRODUCAO")
-            .replace("ESPERANDO INSTALAÇÃO", "ESPERANDO INSTALACAO");
+        const stProd = normalizarStatusProducao(p.status_producao);
+        const stFiltro = normalizarStatusProducao(statusFiltro);
 
-        const bateuStatus = !statusFiltro || stProd === statusFiltro;
+        const bateuStatus = !statusFiltro || stProd === stFiltro;
 
         return bateuTexto && bateuStatus;
     });
@@ -188,9 +210,10 @@ window.filtrarPedidos = filtrarPedidos;
 // LÓGICA DE NEGÓCIO (CRUD de Pedidos com Observações por Item)
 // =========================================================================
 async function salvarPedido(irParaImpressao = false) {
+    const id = (document.getElementById("ped-id")?.value || "").trim();
     const clienteId = document.getElementById("ped-cliente")?.value;
     if (!clienteId) {
-        alert("Por favor, selecione um cliente válido na lista.");
+        BeeHUD.warning("Por favor, selecione um cliente válido na lista.");
         document.getElementById("input-busca-cliente")?.focus();
         return;
     }
@@ -215,17 +238,17 @@ async function salvarPedido(irParaImpressao = false) {
     });
 
     if (produtos.length === 0) {
-        alert("Adicione pelo menos um produto ao pedido.");
+        BeeHUD.warning("Adicione pelo menos um produto ao pedido.");
         return;
     }
 
     const payload = {
-        id: document.getElementById("ped-id").value || null,
+        id: id ? parseInt(id, 10) : null,
         cliente_id: parseInt(clienteId, 10),
         usuario_nome: document.getElementById("ped-usuario").value || "Sistema",
         valor_total: window.calcularTotalGlobal(),
         desconto: Math.max(0, lerDecimal(document.getElementById("ped-desconto").value, 0)),
-        status_producao: document.getElementById("ped-producao").value,
+        status_producao: normalizarStatusProducao(document.getElementById("ped-producao")?.value),
         status_pagamento: document.getElementById("ped-pagamento").value,
         forma_pagamento: document.getElementById("ped-forma-pagamento").value,
         valor_pago: Math.max(0, lerDecimal(document.getElementById("ped-vpago").value, 0)),
@@ -242,21 +265,28 @@ async function salvarPedido(irParaImpressao = false) {
         Array.from(inputImagens.files).forEach(file => formData.append("imagens", file));
     }
 
-    const resultado = await api.postPedidoAPI(formData);
+    try {
+        const resultado = await api.postPedidoAPI(formData);
 
-    if (resultado && resultado.sucesso) {
-        estado.pedidos = await api.fetchPedidos();
-        filtrarPedidos();
-        if (irParaImpressao && resultado.id) {
-            window.location.href = `/imprimir?id=${resultado.id}`;
-            return;
+        if (resultado && resultado.sucesso) {
+            fecharModalPedido();
+            estado.pedidos = await api.fetchPedidos();
+            filtrarPedidos();
+            if (irParaImpressao && resultado.id) {
+                window.location.href = `/imprimir?id=${resultado.id}`;
+                return;
+            }
+            const idSalvo = id || resultado.id;
+            BeeHUD.success(id ? `Pedido #${id} atualizado com sucesso!` : `Pedido #${idSalvo} criado com sucesso!`);
+            if (window.oferecerAvisoStatusWhatsApp && resultado.whatsapp_notificacao) {
+                window.oferecerAvisoStatusWhatsApp(resultado.whatsapp_notificacao);
+            }
+        } else {
+            BeeHUD.error("Erro ao salvar pedido: " + (resultado?.erro || "Verifique os dados informados."));
         }
-        window.fecharModalPedido();
-        if (window.oferecerAvisoStatusWhatsApp && resultado.whatsapp_notificacao) {
-            window.oferecerAvisoStatusWhatsApp(resultado.whatsapp_notificacao);
-        }
-    } else {
-        alert("Erro ao salvar pedido: " + (resultado?.erro || "Verifique os dados informados."));
+    } catch (e) {
+        console.error("Erro ao salvar pedido:", e);
+        BeeHUD.error("Erro inesperado ao salvar pedido.");
     }
 }
 
@@ -268,7 +298,7 @@ async function editarPedido(id) {
     window.configurarBuscaCliente(pedido.cliente_id);
     document.getElementById("ped-usuario").value = pedido.usuario_nome || "Sistema";
     document.getElementById("ped-desconto").value = Number(pedido.desconto || 0).toFixed(2);
-    document.getElementById("ped-producao").value = pedido.status_producao || "PENDENTE";
+    document.getElementById("ped-producao").value = normalizarStatusProducao(pedido.status_producao) || "PENDENTE";
     document.getElementById("ped-pagamento").value = pedido.status_pagamento || "PENDENTE";
     document.getElementById("ped-forma-pagamento").value = pedido.forma_pagamento || "";
     document.getElementById("ped-vpago").value = Number(pedido.valor_pago || 0).toFixed(2);
@@ -299,14 +329,21 @@ async function editarPedido(id) {
 }
 
 async function excluirPedido(id) {
-    if (!confirm(`Tem certeza que deseja excluir o pedido #${id}?`)) return;
+    const ok = await BeeHUD.confirm({
+        titulo: "Excluir Pedido",
+        mensagem: `Tem certeza que deseja excluir o pedido #${id}?`,
+        confirmTexto: "Sim, excluir",
+        tipo: "danger"
+    });
+    if (!ok) return;
 
     const sucesso = await api.deletePedidoAPI(id);
     if (sucesso) {
+        BeeHUD.success(`Pedido #${id} excluído com sucesso!`);
         estado.pedidos = await api.fetchPedidos();
         filtrarPedidos();
     } else {
-        alert("Erro ao excluir pedido.");
+        BeeHUD.error("Erro ao excluir pedido.");
     }
 }
 
@@ -323,6 +360,8 @@ function preencherFormularioConfiguracoes(cfg) {
     setVal("cfg-documento-empresa", cfg.documento_empresa || "");
     setVal("cfg-telefone-empresa", cfg.telefone_empresa || "");
     setVal("cfg-endereco-empresa", cfg.endereco_empresa || "");
+    setVal("cfg-cidade-empresa", cfg.cidade_empresa || "");
+    setVal("cfg-estado-empresa", cfg.estado_empresa || "");
     setVal("cfg-modelo-impressao", cfg.modelo_impressao_padrao || "os");
     setVal("cfg-obs-padrao", cfg.obs_padrao_impressao || "Obrigado pela preferência!");
 }
@@ -347,7 +386,7 @@ function renderizarListaAtendentesConfig(lista) {
     }
     container.innerHTML = lista.map(u => `
         <div class="flex items-center justify-between bg-slate-950 border border-slate-800 px-3.5 py-2.5 rounded-xl text-xs">
-            <span class="font-bold text-slate-200">👤 ${u.nome}</span>
+            <span class="font-bold text-slate-200">${u.nome}</span>
             <button type="button" onclick="removerAtendenteConfig(${u.id})" class="text-rose-400 hover:text-rose-300 font-bold cursor-pointer">Remover</button>
         </div>
     `).join("");
@@ -361,14 +400,16 @@ window.salvarConfiguracoesEmpresa = async (event) => {
         documento_empresa: document.getElementById("cfg-documento-empresa")?.value || "",
         telefone_empresa: document.getElementById("cfg-telefone-empresa")?.value || "",
         endereco_empresa: document.getElementById("cfg-endereco-empresa")?.value || "",
+        cidade_empresa: document.getElementById("cfg-cidade-empresa")?.value.trim() || "",
+        estado_empresa: document.getElementById("cfg-estado-empresa")?.value.trim().toUpperCase() || "",
         modelo_impressao_padrao: document.getElementById("cfg-modelo-impressao")?.value || "os",
         obs_padrao_impressao: document.getElementById("cfg-obs-padrao")?.value || ""
     };
     const resp = await api.salvarConfiguracoesAPI(payload);
     if (resp && resp.sucesso) {
-        alert("Configurações da gráfica salvas com sucesso!");
+        BeeHUD.success("Configurações da gráfica salvas com sucesso!");
     } else {
-        alert("Erro ao salvar configurações.");
+        BeeHUD.error("Erro ao salvar configurações.");
     }
 };
 
@@ -386,13 +427,20 @@ window.salvarNovoAtendenteConfig = async (event) => {
         ui.preencherSelectAtendentes(estado.atendentes);
         await carregarPainelConfiguracoes();
     } else {
-        alert("Erro ao salvar atendente.");
+        BeeHUD.error("Erro ao salvar atendente.");
     }
 };
 
 window.removerAtendenteConfig = async (id) => {
-    if (!confirm("Deseja remover este atendente?")) return;
+    const ok = await BeeHUD.confirm({
+        titulo: "Remover Atendente",
+        mensagem: "Deseja remover este atendente da equipe?",
+        confirmTexto: "Sim, remover",
+        tipo: "danger"
+    });
+    if (!ok) return;
     if (await api.removerAtendenteAPI(id)) {
+        BeeHUD.success("Atendente removido com sucesso!");
         estado.atendentes = await api.fetchAtendentes();
         ui.preencherSelectAtendentes(estado.atendentes);
         await carregarPainelConfiguracoes();
@@ -431,11 +479,14 @@ window.abrirModalPedido = () => {
     alternarAbaPedidos("novo");
 };
 
-window.fecharModalPedido = () => {
+function fecharModalPedido() {
     const lblAba = document.getElementById("lbl-aba-novo-pedido");
     if (lblAba) lblAba.textContent = "Novo Pedido";
+    const pedIdInput = document.getElementById("ped-id");
+    if (pedIdInput) pedIdInput.value = "";
     alternarAbaPedidos("historico");
-};
+}
+window.fecharModalPedido = fecharModalPedido;
 
 window.calcularTotalGlobal = () => {
     const total = obterTotalAtual();
@@ -503,11 +554,11 @@ window.configurarBuscaCliente = (clienteIdSelecionado = "") => {
     const nomeClienteInicial = clienteObj ? clienteObj.nome : "";
 
     containerCliente.innerHTML = `
-        <label class="block text-xs font-bold text-slate-400 uppercase mb-1.5">Cliente * (Digite para buscar)</label>
+        <label class="block text-xs font-bold text-zinc-400 uppercase mb-1.5">Cliente * (Digite para buscar)</label>
         <div class="relative">
-            <input type="text" id="input-busca-cliente" value="${nomeClienteInicial.replace(/"/g, '&quot;')}" placeholder="🔍 Digite o nome do cliente..." autocomplete="off" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 outline-none focus:border-amber-400 text-sm" oninput="window.filtrarDropdownClientes()" onfocus="window.mostrarDropdownClientes()">
+            <input type="text" id="input-busca-cliente" value="${nomeClienteInicial.replace(/"/g, '&quot;')}" placeholder="Digite o nome do cliente..." autocomplete="off" class="w-full bg-black border border-zinc-800 text-white rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-sm" oninput="window.filtrarDropdownClientes()" onfocus="window.mostrarDropdownClientes()">
             <input type="hidden" id="ped-cliente" value="${clienteIdSelecionado}">
-            <div id="dropdown-cliente" class="hidden absolute left-0 right-0 top-full mt-1 bg-slate-950 border border-slate-700 rounded-xl shadow-xl max-h-48 overflow-y-auto z-50"></div>
+            <div id="dropdown-cliente" class="hidden absolute left-0 right-0 top-full mt-1 bg-zinc-900 border border-zinc-800 rounded-xl shadow-xl max-h-48 overflow-y-auto z-50"></div>
         </div>
     `;
 };

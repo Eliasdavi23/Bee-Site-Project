@@ -27,18 +27,19 @@ export function preencherSelectAtendentes(atendentes) {
 }
 
 function badgeStatusProducao(status) {
-    const st = String(status || "PENDENTE").toUpperCase();
+    const raw = String(status || "PENDENTE").trim().toUpperCase();
+    const st = raw.replace(/_/g, " ").replace(/\s+/g, " ").replace("EM PRODUÇÃO", "EM PRODUCAO").replace("ESPERANDO INSTALAÇÃO", "ESPERANDO INSTALACAO");
     const map = {
-        "PENDENTE": "bg-amber-950/70 text-amber-400 border-amber-500/30",
-        "EM PRODUCAO": "bg-blue-950/70 text-blue-400 border-blue-500/30",
-        "EM PRODUÇÃO": "bg-blue-950/70 text-blue-400 border-blue-500/30",
-        "AGUARDANDO RETIRADA": "bg-purple-950/70 text-purple-400 border-purple-500/30",
-        "ESPERANDO INSTALACAO": "bg-cyan-950/70 text-cyan-400 border-cyan-500/30",
-        "ESPERANDO INSTALAÇÃO": "bg-cyan-950/70 text-cyan-400 border-cyan-500/30",
-        "FINALIZADO": "bg-emerald-950/70 text-emerald-400 border-emerald-500/30"
+        "PENDENTE": { cls: "bg-yellow-950/70 text-yellow-400 border-yellow-500/30", label: "PENDENTE" },
+        "EM PRODUCAO": { cls: "bg-blue-950/70 text-blue-400 border-blue-500/30", label: "EM PRODUÇÃO" },
+        "AGUARDANDO RETIRADA": { cls: "bg-purple-950/70 text-purple-400 border-purple-500/30", label: "AGUARDANDO RETIRADA" },
+        "ESPERANDO INSTALACAO": { cls: "bg-cyan-950/70 text-cyan-400 border-cyan-500/30", label: "ESPERANDO INSTALAÇÃO" },
+        "FINALIZADO": { cls: "bg-emerald-950/70 text-emerald-400 border-emerald-500/30", label: "FINALIZADO" },
+        "CANCELADO": { cls: "bg-rose-950/70 text-rose-400 border-rose-500/30", label: "CANCELADO" },
+        "ORCAMENTO": { cls: "bg-zinc-800 text-zinc-300 border-zinc-700", label: "ORÇAMENTO" }
     };
-    const cls = map[st] || "bg-slate-800 text-slate-300 border-slate-700";
-    return `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold border ${cls}">${escaparHtml(st)}</span>`;
+    const item = map[st] || { cls: "bg-zinc-800 text-zinc-300 border-zinc-700", label: raw.replace(/_/g, " ") };
+    return `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold border ${item.cls}">${escaparHtml(item.label)}</span>`;
 }
 
 export function renderizarTabela(pedidos) {
@@ -48,7 +49,7 @@ export function renderizarTabela(pedidos) {
     if (!tbody) return;
 
     if (pedidos.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-slate-500">Nenhum pedido encontrado para os filtros selecionados.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-zinc-500">Nenhum pedido encontrado para os filtros selecionados.</td></tr>`;
         return;
     }
 
@@ -62,28 +63,28 @@ export function renderizarTabela(pedidos) {
                 const obs = (it.observacao || "").trim();
                 return `
                     <div class="text-xs leading-tight py-0.5">
-                        <span class="font-bold text-amber-400">${it.quantidade}x</span>
-                        <span class="text-slate-200 font-medium">${escaparHtml(it.nome_produto)}</span>
-                        ${obs ? `<div class="text-[11px] text-amber-300/90 bg-amber-950/40 border border-amber-500/20 rounded px-1.5 py-0.5 mt-0.5 inline-block">📝 ${escaparHtml(obs)}</div>` : ""}
+                        <span class="font-bold text-yellow-400">${it.quantidade}x</span>
+                        <span class="text-zinc-200 font-medium">${escaparHtml(it.nome_produto)}</span>
+                        ${obs ? `<div class="text-[11px] text-yellow-300 bg-yellow-950/40 border border-yellow-500/30 rounded px-1.5 py-0.5 mt-0.5 inline-block">${escaparHtml(obs)}</div>` : ""}
                     </div>
                 `;
             }).join("")
-            : `<span class="text-xs text-slate-500 italic">Sem itens detalhados</span>`;
+            : `<span class="text-xs text-zinc-500 italic">Sem itens detalhados</span>`;
 
         const obsGeral = (p.observacao || "").trim();
         const stPag = String(p.status_pagamento || "PENDENTE").toUpperCase();
-        const corPag = stPag === "PAGO" ? "text-emerald-400" : (stPag === "PARCIAL" ? "text-amber-400" : "text-rose-400");
+        const corPag = stPag === "PAGO" ? "text-emerald-400" : (stPag === "PARCIAL" ? "text-yellow-400" : "text-rose-400");
 
         return `
-            <tr class="hover:bg-slate-900/70 transition border-b border-slate-800/60 align-top">
-                <td class="p-4 font-black text-amber-400">#${p.id}</td>
+            <tr class="hover:bg-zinc-800/50 transition border-b border-zinc-800/80 align-top">
+                <td class="p-4 font-black text-yellow-400">#${p.id}</td>
                 <td class="p-4">
-                    <div class="font-bold text-slate-100">${escaparHtml(p.cliente_nome || 'Cliente Removido')}</div>
-                    <div class="text-xs text-slate-400 mt-0.5">👤 Atendente: <span class="text-slate-300 font-semibold">${escaparHtml(p.usuario_nome || 'Sistema')}</span></div>
+                    <div class="font-bold text-white">${escaparHtml(p.cliente_nome || 'Cliente Removido')}</div>
+                    <div class="text-xs text-zinc-400 mt-0.5">Atendente: <span class="text-zinc-300 font-semibold">${escaparHtml(p.usuario_nome || 'Sistema')}</span></div>
                 </td>
                 <td class="p-4 max-w-xs space-y-1">
                     ${htmlItens}
-                    ${obsGeral ? `<div class="text-[11px] text-slate-400 border-t border-slate-800 pt-1 mt-1">📌 Obs. Pedido: ${escaparHtml(obsGeral)}</div>` : ""}
+                    ${obsGeral ? `<div class="text-[11px] text-zinc-400 border-t border-zinc-800 pt-1 mt-1">Obs. Pedido: ${escaparHtml(obsGeral)}</div>` : ""}
                 </td>
                 <td class="p-4 font-black text-emerald-400 whitespace-nowrap">${total}</td>
                 <td class="p-4 text-center whitespace-nowrap">
@@ -91,15 +92,15 @@ export function renderizarTabela(pedidos) {
                 </td>
                 <td class="p-4 text-center whitespace-nowrap">
                     <div class="text-xs font-extrabold ${corPag}">${escaparHtml(stPag)} ${p.forma_pagamento ? `(${escaparHtml(p.forma_pagamento)})` : ''}</div>
-                    <div class="text-xs text-slate-300 font-medium mt-0.5">${pago} / ${total}</div>
+                    <div class="text-xs text-zinc-300 font-medium mt-0.5">${pago} / ${total}</div>
                 </td>
-                <td class="p-4 text-center text-xs text-slate-400 whitespace-nowrap">${escaparHtml(p.data || '-')}</td>
+                <td class="p-4 text-center text-xs text-zinc-400 whitespace-nowrap">${escaparHtml(p.data || '-')}</td>
                 <td class="p-4 text-center whitespace-nowrap">
                     <div class="flex items-center justify-center gap-1.5">
-                        <button type="button" onclick="abrirModalWhatsApp({tipo: 'status_pedido', pedido_id: ${p.id}})" class="p-2 bg-emerald-950/70 hover:bg-emerald-800 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-bold transition cursor-pointer" title="Enviar WhatsApp com IA">💬 Whats</button>
-                        <a href="/imprimir?id=${p.id}" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold transition cursor-pointer" title="Imprimir Pedido">🖨️ Imprimir</a>
-                        <button type="button" onclick="editarPedido(${p.id})" class="p-2 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-lg text-xs font-bold transition cursor-pointer" title="Editar Pedido">✏️ Editar</button>
-                        <button type="button" onclick="excluirPedido(${p.id})" class="p-2 bg-slate-800 hover:bg-rose-950 text-rose-400 rounded-lg text-xs font-bold transition cursor-pointer" title="Excluir Pedido">🗑️</button>
+                        <button type="button" onclick="abrirModalWhatsApp({tipo: 'status_pedido', pedido_id: ${p.id}})" class="px-2.5 py-1.5 bg-emerald-950/70 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-bold transition cursor-pointer" title="Enviar WhatsApp com IA">Whats</button>
+                        <a href="/imprimir?id=${p.id}" class="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700/60 rounded-lg text-xs font-bold transition cursor-pointer" title="Imprimir Pedido">Imprimir</a>
+                        <button type="button" onclick="editarPedido(${p.id})" class="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-yellow-400 border border-zinc-700/60 rounded-lg text-xs font-bold transition cursor-pointer" title="Editar Pedido">Editar</button>
+                        <button type="button" onclick="excluirPedido(${p.id})" class="px-2.5 py-1.5 bg-zinc-800 hover:bg-rose-950 text-rose-400 border border-zinc-700/60 rounded-lg text-xs font-bold transition cursor-pointer" title="Excluir Pedido">Excluir</button>
                     </div>
                 </td>
             </tr>
@@ -112,19 +113,19 @@ export function renderizarDropdown(idDropdown, itens, onclickCallback, isProduto
     if (!dropdown) return;
 
     if (itens.length === 0) {
-        dropdown.innerHTML = `<div class="p-3 text-xs text-slate-500 text-center">Nenhum item encontrado</div>`;
+        dropdown.innerHTML = `<div class="p-3 text-xs text-zinc-500 text-center">Nenhum item encontrado</div>`;
     } else {
         dropdown.innerHTML = itens.map(item => {
             if (isProduto) {
                 const preco = Number(item.preco_venda ?? item.preco ?? 0).toFixed(2);
-                return `<div class="p-2.5 hover:bg-slate-800 text-xs text-slate-200 cursor-pointer flex justify-between items-center border-b border-slate-900" onclick="${onclickCallback}(${item.id})">
+                return `<div class="p-2.5 hover:bg-zinc-800 text-xs text-zinc-200 cursor-pointer flex justify-between items-center border-b border-zinc-800" onclick="${onclickCallback}(${item.id})">
                             <span class="font-medium">${escaparHtml(item.nome)}</span>
                             <span class="text-emerald-400 font-bold">R$ ${preco}</span>
                         </div>`;
             } else {
-                return `<div class="p-2.5 hover:bg-slate-800 text-xs text-slate-200 cursor-pointer border-b border-slate-900" onclick="${onclickCallback}(${item.id})">
+                return `<div class="p-2.5 hover:bg-zinc-800 text-xs text-zinc-200 cursor-pointer border-b border-zinc-800" onclick="${onclickCallback}(${item.id})">
                             <span class="font-medium">${escaparHtml(item.nome)}</span>
-                            ${item.telefone ? `<span class="text-slate-400 ml-1">• ${escaparHtml(item.telefone)}</span>` : ""}
+                            ${item.telefone ? `<span class="text-zinc-400 ml-1">• ${escaparHtml(item.telefone)}</span>` : ""}
                         </div>`;
             }
         }).join("");
@@ -140,42 +141,42 @@ export function construirLinhaProduto(idUnico, produto = null, precoInicial = 0,
     const subtotalInicial = formatarMoeda(precoNum * qtdNum);
 
     return `
-        <div class="bg-slate-900 p-3.5 rounded-xl border border-slate-800 space-y-2.5 linha-prod-item transition hover:border-slate-700" id="linha-${idUnico}">
-            <div class="flex flex-col md:flex-row gap-2.5 items-center">
+        <div class="bg-zinc-900/90 p-4 rounded-xl border border-zinc-800 space-y-3 linha-prod-item transition hover:border-zinc-700" id="linha-${idUnico}">
+            <div class="flex flex-col md:flex-row gap-3 items-center">
                 <div class="flex-1 w-full relative">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Produto / Serviço</label>
-                    <input type="text" id="input-busca-prod-${idUnico}" value="${escaparHtml(nome)}" placeholder="🔍 Digite para buscar produto..." autocomplete="off" class="inp-nome-prod w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-amber-400" oninput="filtrarProdutoUI('${idUnico}')" onfocus="mostrarProdutoUI('${idUnico}')">
+                    <label class="block text-[10px] font-bold text-zinc-400 uppercase mb-1">Produto / Serviço</label>
+                    <input type="text" id="input-busca-prod-${idUnico}" value="${escaparHtml(nome)}" placeholder="Digite para buscar produto..." autocomplete="off" class="inp-nome-prod w-full bg-black border border-zinc-800 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent" oninput="filtrarProdutoUI('${idUnico}')" onfocus="mostrarProdutoUI('${idUnico}')">
                     <input type="hidden" id="select-prod-${idUnico}" class="sel-produto" value="${pId}">
-                    <div id="dropdown-prod-${idUnico}" class="hidden absolute left-0 right-0 top-full mt-1 bg-slate-950 border border-slate-700 rounded-lg shadow-xl max-h-48 overflow-y-auto z-50"></div>
+                    <div id="dropdown-prod-${idUnico}" class="hidden absolute left-0 right-0 top-full mt-1 bg-black border border-zinc-800 rounded-lg shadow-xl max-h-48 overflow-y-auto z-50"></div>
                 </div>
                 <div class="w-full md:w-24">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Quantidade</label>
-                    <input type="number" step="any" min="0.01" value="${qtdNum}" oninput="calcularTotalGlobal()" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm text-center inp-qtd focus:outline-none focus:border-amber-400" placeholder="Qtd">
+                    <label class="block text-[10px] font-bold text-zinc-400 uppercase mb-1">Quantidade</label>
+                    <input type="number" step="any" min="0.01" value="${qtdNum}" oninput="calcularTotalGlobal()" class="w-full bg-black border border-zinc-800 text-white rounded-lg px-3 py-2 text-sm text-center inp-qtd focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent" placeholder="Qtd">
                 </div>
                 <div class="w-full md:w-32">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Valor Unit. (R$)</label>
-                    <input type="number" step="any" min="0" value="${precoNum.toFixed(2)}" oninput="calcularTotalGlobal()" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-lg px-3 py-2 text-sm text-right inp-preco focus:outline-none focus:border-amber-400" placeholder="R$ Unit">
+                    <label class="block text-[10px] font-bold text-zinc-400 uppercase mb-1">Valor Unit. (R$)</label>
+                    <input type="number" step="any" min="0" value="${precoNum.toFixed(2)}" oninput="calcularTotalGlobal()" class="w-full bg-black border border-zinc-800 text-white rounded-lg px-3 py-2 text-sm text-right inp-preco focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent" placeholder="R$ Unit">
                 </div>
                 <div class="w-full md:w-28 text-right">
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Subtotal</label>
+                    <label class="block text-[10px] font-bold text-zinc-400 uppercase mb-1">Subtotal</label>
                     <div class="py-2 px-2 text-sm font-black text-emerald-400 lbl-subtotal-item">${subtotalInicial}</div>
                 </div>
                 <div class="pt-4">
-                    <button type="button" onclick="removerLinhaProduto('${idUnico}')" class="p-2 bg-slate-950 hover:bg-rose-950 text-rose-400 border border-slate-800 rounded-lg font-bold cursor-pointer transition" title="Remover item">✕</button>
+                    <button type="button" onclick="removerLinhaProduto('${idUnico}')" class="p-2 bg-black hover:bg-rose-950 text-rose-400 border border-zinc-800 rounded-lg font-bold cursor-pointer transition" title="Remover item">✕</button>
                 </div>
             </div>
 
             <!-- Campo de Observação Individual do Item -->
-            <div class="flex flex-col sm:flex-row sm:items-center gap-2 pt-2 border-t border-slate-800/80">
-                <label for="obs-item-${idUnico}" class="text-[11px] font-bold text-amber-400 uppercase whitespace-nowrap flex items-center gap-1">
-                    📝 Observações deste Item:
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2 pt-2 border-t border-zinc-800">
+                <label for="obs-item-${idUnico}" class="text-[11px] font-bold text-yellow-400 uppercase whitespace-nowrap flex items-center gap-1">
+                    Observações deste Item:
                 </label>
                 <input
                     type="text"
                     id="obs-item-${idUnico}"
                     value="${escaparHtml(obsInicial)}"
                     placeholder="Ex: Acabamento fosco, furar no canto, papel couché 300g, laminação brilho..."
-                    class="inp-obs-item flex-1 w-full bg-slate-950 border border-slate-700/80 text-slate-100 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-amber-400 transition"
+                    class="inp-obs-item flex-1 w-full bg-black border border-zinc-800 text-white placeholder-zinc-500 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition"
                 >
             </div>
         </div>

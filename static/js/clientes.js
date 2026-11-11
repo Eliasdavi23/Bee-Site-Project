@@ -39,7 +39,7 @@ async function salvarCliente(event) {
     };
 
     if (!payload.nome || !payload.telefone) {
-        alert('Preencha o Nome e o Telefone/WhatsApp do cliente.');
+        BeeHUD.warning('Preencha o Nome e o Telefone/WhatsApp do cliente.');
         return;
     }
 
@@ -49,20 +49,32 @@ async function salvarCliente(event) {
             throw new Error(resultado.erro || 'Verifique os campos.');
         }
         fecharModalCliente();
+        BeeHUD.success(id ? 'Cliente atualizado com sucesso!' : 'Cliente cadastrado com sucesso!');
         await carregarClientes();
     } catch (error) {
         console.error('Erro ao salvar cliente:', error);
-        alert(`Erro ao salvar cliente: ${error.message}`);
+        BeeHUD.error(`Erro ao salvar cliente: ${error.message}`);
     }
 }
 
 async function excluirCliente(id) {
-    if (!confirm('Tem certeza que deseja excluir este cliente?')) return;
+    const ok = await BeeHUD.confirm({
+        titulo: 'Excluir Cliente',
+        mensagem: 'Tem certeza que deseja excluir este cliente do sistema?',
+        confirmTexto: 'Sim, excluir',
+        tipo: 'danger'
+    });
+    if (!ok) return;
     try {
-        if (await api.excluirCliente(id)) await carregarClientes();
-        else alert('Erro ao excluir cliente.');
+        if (await api.excluirCliente(id)) {
+            BeeHUD.success('Cliente excluído com sucesso!');
+            await carregarClientes();
+        } else {
+            BeeHUD.error('Erro ao excluir cliente.');
+        }
     } catch (error) {
         console.error('Erro ao excluir cliente:', error);
+        BeeHUD.error('Falha de comunicação ao excluir cliente.');
     }
 }
 

@@ -58,7 +58,7 @@ export function renderizarClientesDevedores(devedores) {
     tbody.innerHTML = '';
 
     if (!devedores || devedores.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">Nenhum cliente inadimplente! 🎉</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">Nenhum cliente inadimplente! </td></tr>`;
         return;
     }
 

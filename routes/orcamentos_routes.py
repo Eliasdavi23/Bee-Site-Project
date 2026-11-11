@@ -1,37 +1,24 @@
-import os
 from datetime import datetime
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException, Response
+from pydantic import ConfigDict, Field
+from services import pdf_service
+from services.whatsapp import atendimento
+from services.whatsapp.telefone import normalizar_telefone
+from services.whatsapp.mensagens import formatar_moeda
 from pydantic import BaseModel
+
 from config.database import get_connection
 from routes.auth_routes import auth_required
-from services.orcamento_services import buscar_orcamento_por_id_db, atualizar_orcamento_db
+from services.db_utils import anexar_itens_em_lote, listar_imagens_pedido_db, listar_itens_pedido_db
+from services.orcamento_services import (
+    _salvar_itens_orcamento,
+    atualizar_orcamento_db,
+    buscar_orcamento_por_id_db,
+    calcular_totais_orcamento,
+)
 
 router = APIRouter(prefix="/api/orcamentos", tags=["Orçamentos"])
-
-UPLOAD_DIR = "static/uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-
-def _parse_decimal(valor, padrao: float = 0.0) -> float:
-    if valor is None or valor == "":
-        return padrao
-    if isinstance(valor, (int, float)):
-        return float(valor)
-    texto = str(valor).strip().replace("R$", "").replace(" ", "")
-    if not texto:
-        return padrao
-    if "," in texto and "." in texto:
-        if texto.rfind(",") > texto.rfind("."):
-            texto = texto.replace(".", "").replace(",", ".")
-        else:
-            texto = texto.replace(",", "")
-    elif "," in texto:
-        texto = texto.replace(",", ".")
-    try:
-        return float(texto)
-    except ValueError:
-        return padrao
 
 
 class ItemOrcamentoSchema(BaseModel):
@@ -51,6 +38,19 @@ class OrcamentoDadosSchema(BaseModel):
     itens: List[ItemOrcamentoSchema]
 
 
+class EnviarOrcamentoWhatsAppSchema(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+    telefone: Optional[str] = Field(default="", max_length=40)
+    mensagem: Optional[str] = Field(default="", max_length=1500)
+
+
+class EnviarOrcamentoEmailSchema(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+    email: Optional[str] = Field(default="", max_length=120)
+    assunto: Optional[str] = Field(default="", max_length=200)
+    mensagem: Optional[str] = Field(default="", max_length=2000)
+
+
 class OrcamentoCreateSchema(BaseModel):
     dados: OrcamentoDadosSchema
 
@@ -64,7 +64,8 @@ def listar_orcamentos(user: str = Depends(auth_required)):
     conn = get_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT
                 p.*,
                 c.nome AS cliente_nome,
@@ -76,25 +77,10 @@ def listar_orcamentos(user: str = Depends(auth_required)):
             LEFT JOIN clientes c ON p.cliente_id = c.id
             WHERE p.tipo = 'ORCAMENTO'
             ORDER BY p.id DESC
-        """)
+            """
+        )
         orcamentos = [dict(row) for row in cursor.fetchall()]
-
-        if orcamentos:
-            orc_ids = [o["id"] for o in orcamentos]
-            placeholders = ",".join(["?"] * len(orc_ids))
-            cursor.execute(
-                f"SELECT * FROM itens_pedido WHERE pedido_id IN ({placeholders}) ORDER BY id ASC",
-                tuple(orc_ids)
-            )
-            itens_por_orc = {}
-            for row in cursor.fetchall():
-                d = dict(row)
-                d["observacao"] = d.get("observacao") or ""
-                itens_por_orc.setdefault(d["pedido_id"], []).append(d)
-            for o in orcamentos:
-                o["itens"] = itens_por_orc.get(o["id"], [])
-
-        return orcamentos
+        return anexar_itens_em_lote(cursor, orcamentos)
     except Exception as e:
         print(f"Erro ao listar orçamentos: {e}")
         return []
@@ -112,37 +98,16 @@ def obter_orcamento(orcamento_id: int, user: str = Depends(auth_required)):
 
 @router.get("/{orcamento_id}/itens")
 def listar_itens_orcamento(orcamento_id: int, user: str = Depends(auth_required)):
-    conn = get_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM itens_pedido WHERE pedido_id = ? ORDER BY id ASC", (orcamento_id,))
-        itens = []
-        for row in cursor.fetchall():
-            d = dict(row)
-            d["observacao"] = d.get("observacao") or ""
-            itens.append(d)
-        return itens
-    finally:
-        conn.close()
+    return listar_itens_pedido_db(orcamento_id)
 
 
 @router.get("/{orcamento_id}/imagens")
 def listar_imagens_orcamento(orcamento_id: int, user: str = Depends(auth_required)):
-    conn = get_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT caminho_arquivo FROM pedido_imagens WHERE pedido_id = ?", (orcamento_id,))
-        imagens = [row["caminho_arquivo"] for row in cursor.fetchall()]
-        return imagens
-    finally:
-        conn.close()
+    return listar_imagens_pedido_db(orcamento_id)
 
 
 @router.post("")
-async def criar_orcamento(
-    payload: OrcamentoCreateSchema,
-    user: str = Depends(auth_required)
-):
+async def criar_orcamento(payload: OrcamentoCreateSchema, user: str = Depends(auth_required)):
     dados_orcamento = payload.dados
     if not dados_orcamento.itens:
         raise HTTPException(status_code=400, detail="Adicione pelo menos um produto ao orçamento.")
@@ -151,57 +116,31 @@ async def criar_orcamento(
     try:
         cursor = conn.cursor()
         data_atual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-        subtotal_geral = sum(
-            round(max(0.01, round(_parse_decimal(item.quantidade, 1.0), 4)) * max(0.0, round(_parse_decimal(item.preco_unitario, 0.0), 4)), 2)
-            for item in dados_orcamento.itens
+        desconto_val, valor_total_liquido = calcular_totais_orcamento(
+            dados_orcamento.itens, dados_orcamento.desconto
         )
-        desconto_val = max(0.0, round(_parse_decimal(dados_orcamento.desconto, 0.0), 2))
-        valor_total_liquido = round(max(0.0, subtotal_geral - desconto_val), 2)
-
         usuario_responsavel = (dados_orcamento.usuario or dados_orcamento.atendente or user or "Sistema").strip()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO pedidos (
                 cliente_id, valor_total, valor_pago, desconto,
                 status_producao, status_pagamento, forma_pagamento,
                 observacao, data, usuario_nome, tipo
             )
             VALUES (?, ?, 0.0, ?, 'PENDENTE', 'PENDENTE', '', ?, ?, ?, 'ORCAMENTO')
-        """, (
-            dados_orcamento.cliente_id,
-            valor_total_liquido,
-            desconto_val,
-            (dados_orcamento.observacao or "").strip(),
-            data_atual,
-            usuario_responsavel
-        ))
-
+            """,
+            (
+                dados_orcamento.cliente_id,
+                valor_total_liquido,
+                desconto_val,
+                (dados_orcamento.observacao or "").strip(),
+                data_atual,
+                usuario_responsavel,
+            ),
+        )
         orcamento_id = cursor.lastrowid
-
-        for item in dados_orcamento.itens:
-            qtd = max(0.01, round(_parse_decimal(item.quantidade, 1.0), 4))
-            preco_unit = max(0.0, round(_parse_decimal(item.preco_unitario, 0.0), 4))
-            subtotal_item = round(qtd * preco_unit, 2)
-            obs_item = (item.observacao or "").strip()
-
-            cursor.execute("SELECT nome FROM produtos WHERE id = ?", (item.produto_id,))
-            prod_db = cursor.fetchone()
-            nome_prod = prod_db["nome"] if prod_db else "Produto"
-
-            cursor.execute("""
-                INSERT INTO itens_pedido (pedido_id, produto_id, nome_produto, quantidade, preco_unitario, subtotal, observacao)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (
-                orcamento_id,
-                item.produto_id,
-                nome_prod,
-                qtd,
-                preco_unit,
-                subtotal_item,
-                obs_item
-            ))
-
+        _salvar_itens_orcamento(cursor, orcamento_id, dados_orcamento.itens)
         conn.commit()
         return {"sucesso": True, "mensagem": "Orçamento criado com sucesso!", "id": orcamento_id}
     except Exception as e:
@@ -216,10 +155,8 @@ def converter_orcamento_em_venda(orcamento_id: int, user: str = Depends(auth_req
     conn = get_connection()
     try:
         cursor = conn.cursor()
-
         cursor.execute("SELECT id, tipo, status_producao FROM pedidos WHERE id = ?", (orcamento_id,))
         orcamento = cursor.fetchone()
-
         if not orcamento:
             raise HTTPException(status_code=404, detail="Orçamento não encontrado.")
 
@@ -227,12 +164,7 @@ def converter_orcamento_em_venda(orcamento_id: int, user: str = Depends(auth_req
         if st_prod in ("ORCAMENTO", "ORÇAMENTO", ""):
             st_prod = "PENDENTE"
 
-        cursor.execute("""
-            UPDATE pedidos 
-            SET tipo = 'VENDA', status_producao = ?
-            WHERE id = ?
-        """, (st_prod, orcamento_id))
-
+        cursor.execute("UPDATE pedidos SET tipo = 'VENDA', status_producao = ? WHERE id = ?", (st_prod, orcamento_id))
         conn.commit()
         return {"sucesso": True, "mensagem": "Orçamento aprovado e convertido em venda com sucesso!"}
     except HTTPException:
@@ -245,11 +177,7 @@ def converter_orcamento_em_venda(orcamento_id: int, user: str = Depends(auth_req
 
 
 @router.put("/{orcamento_id}")
-def atualizar_orcamento(
-    orcamento_id: int,
-    payload: OrcamentoUpdateSchema,
-    user: str = Depends(auth_required)
-):
+def atualizar_orcamento(orcamento_id: int, payload: OrcamentoUpdateSchema, user: str = Depends(auth_required)):
     conn = get_connection()
     try:
         cursor = conn.cursor()
@@ -263,7 +191,6 @@ def atualizar_orcamento(
 
     dados = payload.dados
     usuario_responsavel = (dados.usuario or dados.atendente or user or "Sistema").strip()
-
     try:
         atualizar_orcamento_db(orcamento_id, dados, usuario_responsavel)
         return {"sucesso": True, "mensagem": f"Orçamento #{orcamento_id} atualizado com sucesso!"}
@@ -286,3 +213,141 @@ def excluir_orcamento(orcamento_id: int, user: str = Depends(auth_required)):
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         conn.close()
+
+
+@router.get("/{orcamento_id}/pdf")
+def baixar_orcamento_pdf(orcamento_id: int, user: str = Depends(auth_required)):
+    """Gera e retorna o PDF oficial do orçamento para visualização ou download."""
+    orcamento = buscar_orcamento_por_id_db(orcamento_id)
+    if not orcamento:
+        raise HTTPException(status_code=404, detail="Orçamento não encontrado.")
+    pdf_bytes = pdf_service.gerar_pdf_orcamento(orcamento)
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="Orcamento_{orcamento_id}.pdf"'},
+    )
+
+
+@router.post("/{orcamento_id}/enviar-whatsapp")
+def enviar_orcamento_whatsapp_api(
+    orcamento_id: int,
+    payload: Optional[EnviarOrcamentoWhatsAppSchema] = None,
+    user: str = Depends(auth_required),
+):
+    """Gera o PDF do orçamento e o envia diretamente pelo WhatsApp para o cliente."""
+    orcamento = buscar_orcamento_por_id_db(orcamento_id)
+    if not orcamento:
+        raise HTTPException(status_code=404, detail="Orçamento não encontrado.")
+
+    tel_bruto = (payload.telefone if payload and payload.telefone else "") or orcamento.get("cliente_telefone") or ""
+    telefone = normalizar_telefone(tel_bruto, aceitar_sem_ddd=True)
+    if not telefone:
+        raise HTTPException(
+            status_code=400,
+            detail="O cliente não possui um telefone de WhatsApp válido cadastrado. Informe um número com DDD.",
+        )
+
+    pdf_bytes = pdf_service.gerar_pdf_orcamento(orcamento)
+
+    if payload and payload.mensagem and payload.mensagem.strip():
+        texto_envio = payload.mensagem.strip()
+    else:
+        cli_nome = (orcamento.get("cliente_nome") or "Cliente").strip()
+        total_fmt = formatar_moeda(orcamento.get("valor_total"))
+        dados_emp = repo.dados_empresa() if hasattr(repo, "dados_empresa") else {}
+        nome_emp_wa = (dados_emp.get("nome_empresa") or "").strip() or "BEE Gráfica"
+        texto_envio = (
+            f"*Orçamento #{orcamento_id} - {nome_emp_wa}*\n\n"
+            f"Olá, {cli_nome}! Segue em anexo a sua proposta comercial em PDF no valor total de {total_fmt}.\n\n"
+            f"Qualquer dúvida sobre acabamento ou prazos, estamos à disposição por aqui!"
+        )
+
+    res = atendimento.enviar_arquivo(
+        arquivo_bytes=pdf_bytes,
+        nome_arquivo=f"Orcamento_{orcamento_id}.pdf",
+        legenda=texto_envio,
+        usuario=user or "Atendente",
+        mime_type="application/pdf",
+        tipo_midia="documento",
+        pedido_id=orcamento_id,
+        cliente_id=orcamento.get("cliente_id"),
+        telefone_manual=telefone,
+        raise_on_error=False,
+    )
+
+    return {
+        "sucesso": True,
+        "enviado": bool(res.get("enviado")),
+        "mensagem": "Orçamento em PDF enviado com sucesso pelo WhatsApp!" if res.get("enviado") else (res.get("erro") or "PDF gerado com sucesso. WhatsApp desconectado via QR Code no momento."),
+        "midia_url": res.get("midia_url"),
+        "link_web": res.get("link_web"),
+        "telefone": res.get("telefone"),
+        "orcamento_id": orcamento_id,
+        "conversa_id": res.get("conversa_id"),
+    }
+
+
+@router.post("/{orcamento_id}/enviar-email")
+def enviar_orcamento_email_api(
+    orcamento_id: int,
+    payload: Optional[EnviarOrcamentoEmailSchema] = None,
+    user: str = Depends(auth_required),
+):
+    """Gera o PDF do orçamento e o dispara como anexo de e-mail para o cliente."""
+    orcamento = buscar_orcamento_por_id_db(orcamento_id)
+    if not orcamento:
+        raise HTTPException(status_code=404, detail="Orçamento não encontrado.")
+
+    dest_email = (payload.email if payload and payload.email else "") or orcamento.get("cliente_email") or ""
+    if not dest_email or "@" not in dest_email:
+        raise HTTPException(status_code=400, detail="E-mail de destinatário inválido ou não informado no cadastro do cliente.")
+
+    pdf_bytes = pdf_service.gerar_pdf_orcamento(orcamento)
+
+    import os, smtplib
+    from email.message import EmailMessage
+
+    smtp_host = os.getenv("SMTP_HOST")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_pass = os.getenv("SMTP_PASS")
+    smtp_sender = os.getenv("SMTP_FROM", smtp_user or "orcamentos@beegrafica.local")
+
+    if not smtp_host:
+        url_pdf, _ = pdf_service.salvar_pdf_orcamento_disco(orcamento)
+        return {
+            "sucesso": False,
+            "configurado": False,
+            "mensagem": "Servidor SMTP não configurado nas variáveis de ambiente (.env). O PDF foi gerado e salvo para download local.",
+            "pdf_url": url_pdf,
+            "email_destinatario": dest_email,
+        }
+
+    try:
+        msg = EmailMessage()
+        msg["Subject"] = (payload.assunto if payload and payload.assunto else "") or f"Orçamento #{orcamento_id} - BEE Gráfica"
+        msg["From"] = smtp_sender
+        msg["To"] = dest_email
+
+        corpo = (payload.mensagem if payload and payload.mensagem else "") or (
+            f"Olá, {orcamento.get('cliente_nome', 'Cliente')}!\n\n"
+            f"Segue em anexo a sua proposta comercial referente ao Orçamento #{orcamento_id}.\n\n"
+            f"Atenciosamente,\nBee Gráfica Digital"
+        )
+        msg.set_content(corpo)
+        msg.add_attachment(pdf_bytes, maintype="application", subtype="pdf", filename=f"Orcamento_{orcamento_id}.pdf")
+
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as s:
+            s.starttls()
+            if smtp_user and smtp_pass:
+                s.login(smtp_user, smtp_pass)
+            s.send_message(msg)
+
+        return {
+            "sucesso": True,
+            "mensagem": f"Orçamento #{orcamento_id} enviado por e-mail com sucesso para {dest_email}!",
+            "email_destinatario": dest_email,
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Falha ao disparar e-mail: {str(exc)}")

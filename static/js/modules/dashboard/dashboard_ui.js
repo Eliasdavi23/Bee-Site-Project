@@ -1,3 +1,5 @@
+// static/js/modules/dashboard/dashboard_ui.js
+
 export function formatarMoeda(valor) {
     return Number(valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
@@ -22,7 +24,7 @@ export function renderizarPagamentos(pagamentos, totalFaturamento) {
 
     const chaves = Object.keys(pagamentos);
     if (chaves.length === 0) {
-        container.innerHTML = `<p class="text-sm text-slate-500 italic">Nenhum registro no período.</p>`;
+        container.innerHTML = `<p class="text-sm text-zinc-500 italic">Nenhum registro no período.</p>`;
         return;
     }
 
@@ -33,11 +35,11 @@ export function renderizarPagamentos(pagamentos, totalFaturamento) {
         container.innerHTML += `
             <div>
                 <div class="flex justify-between text-xs font-bold mb-1">
-                    <span class="text-slate-300 uppercase">${forma}</span>
-                    <span class="text-amber-400">${formatarMoeda(valor)} (${percentual}%)</span>
+                    <span class="text-zinc-300 uppercase">${forma}</span>
+                    <span class="text-yellow-400 font-bold">${formatarMoeda(valor)} (${percentual}%)</span>
                 </div>
-                <div class="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-800">
-                    <div class="bg-amber-400 h-full rounded-full transition-all duration-500" style="width: ${percentual}%"></div>
+                <div class="w-full bg-black h-2.5 rounded-full overflow-hidden border border-zinc-800">
+                    <div class="bg-yellow-400 h-full rounded-full transition-all duration-500" style="width: ${percentual}%"></div>
                 </div>
             </div>
         `;
@@ -52,20 +54,20 @@ export function renderizarTopAtendentes(atendentes) {
     container.innerHTML = "";
 
     if (!atendentes || atendentes.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-500 italic">Nenhum atendimento registrado.</p>`;
+        container.innerHTML = `<p class="text-xs text-zinc-500 italic">Nenhum atendimento registrado.</p>`;
         return;
     }
 
     atendentes.forEach((at, index) => {
         container.innerHTML += `
-            <div class="flex justify-between items-center text-xs bg-slate-950/50 p-2.5 rounded-xl border border-slate-800">
+            <div class="flex justify-between items-center text-xs bg-black p-3.5 rounded-xl border border-zinc-800">
                 <div class="flex items-center gap-2">
-                    <span class="font-black text-amber-400">#${index + 1}</span>
-                    <span class="font-bold text-slate-200">${at.usuario_nome || 'Sistema'}</span>
+                    <span class="font-black text-yellow-400">#${index + 1}</span>
+                    <span class="font-bold text-zinc-200">${at.usuario_nome || 'Sistema'}</span>
                 </div>
                 <div class="text-right">
                     <span class="font-extrabold text-emerald-400 block">${formatarMoeda(at.total_vendas)}</span>
-                    <span class="text-[10px] text-slate-500">${at.qtd_pedidos} pedido(s)</span>
+                    <span class="text-[10px] text-zinc-500">${at.qtd_pedidos} pedido(s)</span>
                 </div>
             </div>
         `;
@@ -80,18 +82,18 @@ export function renderizarTopProdutos(produtos) {
     container.innerHTML = "";
 
     if (!produtos || produtos.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-500 italic">Nenhum produto vendido.</p>`;
+        container.innerHTML = `<p class="text-xs text-zinc-500 italic">Nenhum produto vendido.</p>`;
         return;
     }
 
     produtos.forEach((prod, index) => {
         container.innerHTML += `
-            <div class="flex justify-between items-center text-xs bg-slate-950/50 p-2.5 rounded-xl border border-slate-800">
+            <div class="flex justify-between items-center text-xs bg-black p-3.5 rounded-xl border border-zinc-800">
                 <div class="flex items-center gap-2">
-                    <span class="font-black text-slate-400">#${index + 1}</span>
-                    <span class="font-medium text-slate-300 truncate max-w-[130px]">${prod.nome_produto}</span>
+                    <span class="font-black text-yellow-400">#${index + 1}</span>
+                    <span class="font-medium text-zinc-300 truncate max-w-[130px]">${prod.nome_produto}</span>
                 </div>
-                <span class="font-bold text-amber-400 bg-amber-950/40 border border-amber-800/50 px-2 py-0.5 rounded-lg">
+                <span class="font-bold text-yellow-400 bg-yellow-400/10 border border-yellow-400/30 px-2.5 py-1 rounded-lg">
                     ${prod.qtd_total} un
                 </span>
             </div>
@@ -107,15 +109,15 @@ export function renderizarUltimosPedidos(pedidos) {
     tbody.innerHTML = "";
 
     if (!pedidos || pedidos.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500 italic">Nenhum pedido encontrado.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-zinc-500 italic">Nenhum pedido encontrado.</td></tr>`;
         return;
     }
 
     pedidos.forEach(p => {
         tbody.innerHTML += `
-            <tr class="hover:bg-slate-850 transition">
-                <td class="p-3 font-bold text-amber-400">#${p.id}</td>
-                <td class="p-3 text-slate-200 truncate max-w-[120px]">${p.cliente_nome}</td>
+            <tr class="hover:bg-zinc-800/50 transition">
+                <td class="p-3 font-bold text-white">#${p.id}</td>
+                <td class="p-3 text-zinc-200 truncate max-w-[120px]">${p.cliente_nome}</td>
                 <td class="p-3 font-bold text-emerald-400">${formatarMoeda(p.valor_total)}</td>
                 <td class="p-3 text-center">${getBadgeStatus(p.status_producao)}</td>
             </tr>
@@ -132,7 +134,7 @@ export function renderizarStatusProducao(statusMap, totalPedidos) {
     if (!statusMap) return;
 
     const legenda = {
-        "PENDENTE": { label: "Pendente", cor: "bg-amber-500", textCor: "text-amber-400" },
+        "PENDENTE": { label: "Pendente", cor: "bg-yellow-400", textCor: "text-yellow-400" },
         "EM PRODUCAO": { label: "Em Produção", cor: "bg-blue-500", textCor: "text-blue-400" },
         "AGUARDANDO RETIRADA": { label: "Aguardando Retirada", cor: "bg-purple-500", textCor: "text-purple-400" },
         "ESPERANDO INSTALACAO": { label: "Esperando Instalação", cor: "bg-cyan-500", textCor: "text-cyan-400" },
@@ -145,12 +147,12 @@ export function renderizarStatusProducao(statusMap, totalPedidos) {
         const pct = totalPedidos > 0 ? ((qtd / totalPedidos) * 100).toFixed(1) : 0;
 
         container.innerHTML += `
-            <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800">
+            <div class="p-3 bg-black rounded-xl border border-zinc-800">
                 <div class="flex justify-between items-center text-xs mb-1.5">
                     <span class="font-bold ${item.textCor}">${item.label}</span>
-                    <span class="font-extrabold text-slate-200">${qtd} <span class="text-slate-500 text-[10px]">(${pct}%)</span></span>
+                    <span class="font-extrabold text-zinc-200">${qtd} <span class="text-zinc-500 text-[10px]">(${pct}%)</span></span>
                 </div>
-                <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+                <div class="w-full bg-zinc-950 h-2 rounded-full overflow-hidden border border-zinc-800/80">
                     <div class="${item.cor} h-full transition-all duration-500" style="width: ${pct}%"></div>
                 </div>
             </div>
@@ -160,16 +162,20 @@ export function renderizarStatusProducao(statusMap, totalPedidos) {
 
 // Helper para Badges da Tabela
 export function getBadgeStatus(status) {
-    switch (status) {
+    const raw = String(status || "PENDENTE").trim().toUpperCase();
+    const st = raw.replace(/_/g, " ").replace(/\s+/g, " ").replace("EM PRODUÇÃO", "EM PRODUCAO");
+    switch (st) {
         case "PENDENTE":
-            return `<span class="bg-amber-950/60 text-amber-400 border border-amber-800/60 text-[10px] font-bold px-2 py-0.5 rounded-md">PENDENTE</span>`;
+            return `<span class="bg-yellow-950/60 text-yellow-400 border border-yellow-500/30 text-[10px] font-bold px-2 py-0.5 rounded-lg">PENDENTE</span>`;
         case "EM PRODUCAO":
-            return `<span class="bg-blue-950/60 text-blue-400 border border-blue-800/60 text-[10px] font-bold px-2 py-0.5 rounded-md">EM PRODUÇÃO</span>`;
+            return `<span class="bg-blue-950/60 text-blue-400 border border-blue-500/30 text-[10px] font-bold px-2 py-0.5 rounded-lg">EM PRODUÇÃO</span>`;
         case "AGUARDANDO RETIRADA":
-            return `<span class="bg-purple-950/60 text-purple-400 border border-purple-800/60 text-[10px] font-bold px-2 py-0.5 rounded-md">RETIRADA</span>`;        case "ESPERANDO INSTALACAO":
-            return `<span class="bg-cyan-950/60 text-cyan-400 border border-cyan-800/60 text-[10px] font-bold px-2 py-0.5 rounded-md">ESPERANDO INSTALAÇÃO</span>`;        case "FINALIZADO":
-            return `<span class="bg-emerald-950/60 text-emerald-400 border border-emerald-800/60 text-[10px] font-bold px-2 py-0.5 rounded-md">FINALIZADO</span>`;
+            return `<span class="bg-purple-950/60 text-purple-400 border border-purple-500/30 text-[10px] font-bold px-2 py-0.5 rounded-lg">RETIRADA</span>`;
+        case "ESPERANDO INSTALACAO":
+            return `<span class="bg-cyan-950/60 text-cyan-400 border border-cyan-500/30 text-[10px] font-bold px-2 py-0.5 rounded-lg">ESPERANDO INSTALAÇÃO</span>`;
+        case "FINALIZADO":
+            return `<span class="bg-emerald-950/60 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-lg">FINALIZADO</span>`;
         default:
-            return `<span class="bg-slate-800 text-slate-400 text-[10px] font-bold px-2 py-0.5 rounded-md">${status || 'N/A'}</span>`;
+            return `<span class="bg-zinc-800 text-zinc-400 text-[10px] font-bold px-2 py-0.5 rounded-lg">${status || 'N/A'}</span>`;
     }
 }

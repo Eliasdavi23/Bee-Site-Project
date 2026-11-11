@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import Dict, Optional
 from config.database import get_connection
 from routes.auth_routes import auth_required
+from services.auth_service import hash_password, verify_password
 
 router = APIRouter()
 
@@ -18,6 +19,8 @@ class ConfiguracoesSchema(BaseModel):
     documento_empresa: Optional[str] = ""
     telefone_empresa: Optional[str] = ""
     email_empresa: Optional[str] = ""
+    cidade_empresa: Optional[str] = ""
+    estado_empresa: Optional[str] = ""
     endereco_empresa: Optional[str] = ""
     modelo_impressao_padrao: Optional[str] = "os"
     obs_padrao_impressao: Optional[str] = "Obrigado pela preferência!"
@@ -64,7 +67,7 @@ def api_criar_usuario(payload: UsuarioCreateSchema, user: str = Depends(auth_req
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO usuarios (nome, senha) VALUES (?, ?) ON CONFLICT(nome) DO UPDATE SET senha=excluded.senha",
-            (nome, senha)
+            (nome, hash_password(senha))
         )
         conn.commit()
         return {"sucesso": True, "mensagem": "Atendente salvo com sucesso!"}
@@ -99,10 +102,10 @@ async def api_validar_senha(request: Request, user: str = Depends(auth_required)
         senha = str(dados.get("senha", "")).strip()
 
         cursor = conn.cursor()
-        cursor.execute("SELECT senha FROM usuarios WHERE nome=?", (nome,))
+        cursor.execute("SELECT senha FROM usuarios WHERE LOWER(nome)=LOWER(?)", (nome,))
         row = cursor.fetchone()
 
-        if row and str(row["senha"]).strip() == senha:
+        if row and verify_password(senha, str(row["senha"]).strip()):
             return {"valido": True}
         return {"valido": False}
     except Exception as e:
@@ -138,6 +141,8 @@ def api_salvar_configuracoes(payload: ConfiguracoesSchema, user: str = Depends(a
             "documento_empresa": (payload.documento_empresa or "").strip(),
             "telefone_empresa": (payload.telefone_empresa or "").strip(),
             "email_empresa": (payload.email_empresa or "").strip(),
+            "cidade_empresa": (payload.cidade_empresa or "").strip(),
+            "estado_empresa": (payload.estado_empresa or "").strip().upper(),
             "endereco_empresa": (payload.endereco_empresa or "").strip(),
             "modelo_impressao_padrao": (payload.modelo_impressao_padrao or "os").strip(),
             "obs_padrao_impressao": (payload.obs_padrao_impressao or "").strip(),

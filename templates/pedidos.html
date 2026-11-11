@@ -1,29 +1,39 @@
 {% extends "base.html" %}
 
-{% block title %}Pedidos & Vendas - Sistema da Empresa{% endblock %}
+{% block title %}Pedidos & Vendas — Bee Gráfica{% endblock %}
 
 {% block content %}
-<div class="p-6 md:p-8 space-y-6 bg-slate-950 w-full min-h-screen text-slate-100 pb-16">
+<div class="p-6 md:p-8 space-y-6 bg-black w-full min-h-screen text-white pb-16">
 
-    <!-- Cabeçalho + Abas Dinâmicas e Responsivas -->
-    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center border-b border-slate-800 pb-5 gap-4">
+    <!-- Cabeçalho + Abas de Navegação -->
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center border-b border-zinc-800 pb-5 gap-4">
         <div>
-            <h1 class="text-2xl md:text-3xl font-black text-amber-400 tracking-wide flex items-center gap-3">
-                📦 CENTRAL DE PEDIDOS & PRODUÇÃO
-            </h1>
-            <p class="text-xs md:text-sm text-slate-400 mt-1">Fluxo rápido de balcão, controle de produção gráfica e histórico detalhado.</p>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-yellow-400/10 border border-yellow-400/20 flex items-center justify-center text-yellow-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-black text-white tracking-wide">CENTRAL DE PEDIDOS & PRODUÇÃO</h1>
+                    <p class="text-xs md:text-sm text-zinc-400 mt-0.5">Fluxo rápido de balcão, esteira de produção gráfica e histórico detalhado.</p>
+                </div>
+            </div>
         </div>
 
         <!-- Barra de Navegação por Abas -->
-        <div class="bee-tabs-bar w-full lg:w-auto" role="tablist" aria-label="Abas do Módulo de Pedidos">
-            <button type="button" id="tab-btn-historico" onclick="alternarAbaPedidos('historico')" class="bee-tab-btn active" role="tab" aria-selected="true">
-                <span>📋</span> <span>Histórico (<span id="total-pedidos-count">0</span>)</span>
+        <div class="flex flex-wrap items-center gap-2 bg-zinc-900 border border-zinc-800 p-1.5 rounded-xl shadow-lg w-full lg:w-auto" role="tablist">
+            <button type="button" id="tab-btn-historico" onclick="alternarAbaPedidos('historico')" class="px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-2 cursor-pointer bg-yellow-400 text-black shadow-lg shadow-yellow-500/20" role="tab" aria-selected="true">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                <span>Histórico (<span id="total-pedidos-count">0</span>)</span>
             </button>
-            <button type="button" id="tab-btn-novo" onclick="abrirModalPedido()" class="bee-tab-btn" role="tab" aria-selected="false">
-                <span>➕</span> <span id="lbl-aba-novo-pedido">Novo Pedido</span>
+            <button type="button" id="tab-btn-novo" onclick="abrirModalPedido()" class="px-4 py-2 rounded-lg text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition flex items-center gap-2 cursor-pointer" role="tab" aria-selected="false">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                <span id="lbl-aba-novo-pedido">Novo Pedido</span>
             </button>
-            <button type="button" id="tab-btn-config" onclick="alternarAbaPedidos('config')" class="bee-tab-btn" role="tab" aria-selected="false">
-                <span>⚙️</span> <span>Configurações</span>
+            <button type="button" id="tab-btn-config" onclick="alternarAbaPedidos('config')" class="px-4 py-2 rounded-lg text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition flex items-center gap-2 cursor-pointer" role="tab" aria-selected="false">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span>Configurações</span>
             </button>
         </div>
     </div>
@@ -31,18 +41,20 @@
     <!-- ==================================================================
          ABA 1: HISTÓRICO E FILA DE PEDIDOS
          ================================================================== -->
-    <section id="painel-aba-historico" class="bee-tab-panel active space-y-5">
+    <section id="painel-aba-historico" class="space-y-6">
 
         <!-- Barra de Busca e Sub-abas de Status -->
-        <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-4 shadow-xl">
-            <div class="flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center">
+        <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl space-y-4 shadow-xl">
+            <div class="flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center">
                 <div class="flex flex-col sm:flex-row gap-3 flex-1">
                     <div class="relative flex-1 max-w-md">
-                        <input type="text" id="campo-busca" oninput="filtrarPedidos()" placeholder="Buscar por Cód, Cliente, Atendente, Produto ou Obs..." class="w-full bg-slate-950 border border-slate-700 text-slate-100 text-sm rounded-xl pl-10 pr-4 py-2.5 outline-none focus:border-amber-400 transition">
-                        <span class="absolute left-3.5 top-2.5 text-slate-500">🔍</span>
+                        <input type="text" id="campo-busca" oninput="filtrarPedidos()" placeholder="Buscar por Cód, Cliente, Atendente, Produto ou Obs..." class="w-full bg-black border border-zinc-800 text-white placeholder-zinc-500 text-sm rounded-lg pl-10 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition">
+                        <span class="absolute left-3.5 top-3 text-zinc-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        </span>
                     </div>
 
-                    <select id="filtro-status-producao" onchange="sincronizarSubAbasStatus(this.value); filtrarPedidos();" class="bg-slate-950 border border-slate-700 text-slate-100 text-sm rounded-xl px-4 py-2.5 outline-none focus:border-amber-400 transition cursor-pointer">
+                    <select id="filtro-status-producao" onchange="sincronizarSubAbasStatus(this.value); filtrarPedidos();" class="bg-black border border-zinc-800 text-white text-sm rounded-lg px-4 py-2.5 outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition cursor-pointer">
                         <option value="">Todos os Status</option>
                         <option value="PENDENTE">PENDENTE</option>
                         <option value="EM PRODUCAO">EM PRODUÇÃO</option>
@@ -53,32 +65,33 @@
                 </div>
 
                 <div class="flex items-center gap-2 justify-end">
-                    <button type="button" onclick="abrirModalPedido()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs transition flex items-center gap-1.5 shadow-lg cursor-pointer">
-                        ➕ Lançar Pedido Rápido
+                    <button type="button" onclick="abrirModalPedido()" class="bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-5 py-2.5 rounded-lg text-xs transition flex items-center gap-2 shadow-lg shadow-yellow-500/20 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                        <span>Lançar Pedido Rápido</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Sub-abas rápidas de filtro de fila -->
-            <div class="flex flex-wrap gap-2 pt-2 border-t border-slate-800/80" id="subtabs-status-producao">
-                <button type="button" onclick="filtrarPorStatusRapido('')" data-status="" class="bee-subtab-btn active">Todos</button>
-                <button type="button" onclick="filtrarPorStatusRapido('PENDENTE')" data-status="PENDENTE" class="bee-subtab-btn">⏳ Pendentes</button>
-                <button type="button" onclick="filtrarPorStatusRapido('EM PRODUCAO')" data-status="EM PRODUCAO" class="bee-subtab-btn">⚙️ Em Produção</button>
-                <button type="button" onclick="filtrarPorStatusRapido('AGUARDANDO RETIRADA')" data-status="AGUARDANDO RETIRADA" class="bee-subtab-btn">📦 Aguardando Retirada</button>
-                <button type="button" onclick="filtrarPorStatusRapido('ESPERANDO INSTALACAO')" data-status="ESPERANDO INSTALACAO" class="bee-subtab-btn">🛠️ Esperando Instalação</button>
-                <button type="button" onclick="filtrarPorStatusRapido('FINALIZADO')" data-status="FINALIZADO" class="bee-subtab-btn">✅ Finalizados</button>
+            <!-- Sub-abas de filtro de fila -->
+            <div class="flex flex-wrap gap-2 pt-3 border-t border-zinc-800/80" id="subtabs-status-producao">
+                <button type="button" onclick="filtrarPorStatusRapido('')" data-status="" class="px-3 py-1.5 rounded-lg text-xs font-bold transition bg-yellow-400 text-black shadow-md shadow-yellow-500/20">Todos</button>
+                <button type="button" onclick="filtrarPorStatusRapido('PENDENTE')" data-status="PENDENTE" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-black text-zinc-400 hover:text-white border border-zinc-800 transition">Pendentes</button>
+                <button type="button" onclick="filtrarPorStatusRapido('EM PRODUCAO')" data-status="EM PRODUCAO" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-black text-zinc-400 hover:text-white border border-zinc-800 transition">Em Produção</button>
+                <button type="button" onclick="filtrarPorStatusRapido('AGUARDANDO RETIRADA')" data-status="AGUARDANDO RETIRADA" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-black text-zinc-400 hover:text-white border border-zinc-800 transition">Aguardando Retirada</button>
+                <button type="button" onclick="filtrarPorStatusRapido('ESPERANDO INSTALACAO')" data-status="ESPERANDO INSTALACAO" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-black text-zinc-400 hover:text-white border border-zinc-800 transition">Esperando Instalação</button>
+                <button type="button" onclick="filtrarPorStatusRapido('FINALIZADO')" data-status="FINALIZADO" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-black text-zinc-400 hover:text-white border border-zinc-800 transition">Finalizados</button>
             </div>
         </div>
 
         <!-- Tabela de Pedidos -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-300">
-                    <thead class="bg-slate-950 text-slate-400 uppercase text-xs border-b border-slate-800">
+                <table class="w-full text-left text-sm text-zinc-300">
+                    <thead class="bg-black text-zinc-400 uppercase text-xs border-b border-zinc-800 font-semibold tracking-wider">
                         <tr>
                             <th class="p-4">Cód.</th>
                             <th class="p-4">Cliente / Atendente</th>
-                            <th class="p-4">Itens & Observações de Produção</th>
+                            <th class="p-4">Itens & Observações</th>
                             <th class="p-4">Valor Total</th>
                             <th class="p-4 text-center">Status Produção</th>
                             <th class="p-4 text-center">Recebimento</th>
@@ -86,7 +99,7 @@
                             <th class="p-4 text-center">Ações</th>
                         </tr>
                     </thead>
-                    <tbody id="tabela-pedidos" class="divide-y divide-slate-800/60">
+                    <tbody id="tabela-pedidos" class="divide-y divide-zinc-800/80">
                     </tbody>
                 </table>
             </div>
@@ -95,17 +108,17 @@
 
     <!-- ==================================================================
          ABA 2: NOVO PEDIDO / EDITOR DE PEDIDO
-         (Mantém #modal-pedido para compatibilidade total)
          ================================================================== -->
-    <section id="modal-pedido" class="bee-tab-panel hidden">
-        <div class="bg-slate-900 border border-slate-800 w-full max-w-5xl mx-auto rounded-2xl shadow-2xl p-6 md:p-8 space-y-6">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800 pb-4 gap-3">
+    <section id="modal-pedido" class="hidden">
+        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-5xl mx-auto rounded-2xl shadow-2xl p-6 md:p-8 space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-zinc-800 pb-4 gap-3">
                 <div>
-                    <h2 id="modal-titulo" class="text-xl md:text-2xl font-black text-amber-400">Cadastrar Novo Pedido</h2>
-                    <p class="text-xs text-slate-400 mt-0.5">Preencha os itens e adicione observações de acabamento individualmente para cada produto.</p>
+                    <h2 id="modal-titulo" class="text-xl md:text-2xl font-black text-white">Cadastrar Novo Pedido</h2>
+                    <p class="text-xs text-zinc-400 mt-0.5">Preencha os itens e adicione observações de acabamento individualmente para cada produto.</p>
                 </div>
-                <button type="button" onclick="fecharModalPedido()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition cursor-pointer flex items-center gap-1.5">
-                    ⬅️ Voltar ao Histórico
+                <button type="button" onclick="fecharModalPedido()" class="px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold border border-zinc-700/60 transition cursor-pointer flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    <span>Voltar ao Histórico</span>
                 </button>
             </div>
 
@@ -115,28 +128,29 @@
                 <!-- Linha 1: Atendente e Cliente -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1.5">Perfil / Atendente *</label>
-                        <select id="ped-usuario" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-400">
+                        <label class="block text-xs font-bold text-zinc-400 uppercase mb-1.5">Perfil / Atendente *</label>
+                        <select id="ped-usuario" class="w-full bg-black border border-zinc-800 text-white rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
                             <option value="Sistema">Sistema</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1.5">Cliente * (Digite para buscar)</label>
-                        <select id="ped-cliente" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-400">
+                        <label class="block text-xs font-bold text-zinc-400 uppercase mb-1.5">Cliente * (Digite para buscar)</label>
+                        <select id="ped-cliente" class="w-full bg-black border border-zinc-800 text-white rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
                             <option value="">Selecione um cliente...</option>
                         </select>
                     </div>
                 </div>
 
                 <!-- Linha 2: Lista de Itens com Observações Individuais -->
-                <div class="border border-slate-800 p-4 md:p-5 rounded-2xl bg-slate-950/60 space-y-4">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800 pb-3 gap-2">
+                <div class="border border-zinc-800 p-5 rounded-2xl bg-black/60 space-y-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-zinc-800 pb-3 gap-2">
                         <div>
-                            <label class="block text-xs font-black text-amber-400 uppercase tracking-wider">Itens do Pedido & Observações por Item</label>
-                            <p class="text-xs text-slate-400">Abaixo de cada produto, informe detalhes como medidas, papel, laminação, furação ou acabamento.</p>
+                            <label class="block text-xs font-bold text-yellow-400 uppercase tracking-wider">Itens do Pedido & Observações por Item</label>
+                            <p class="text-xs text-zinc-400">Abaixo de cada produto, informe detalhes como medidas, papel, laminação, furação ou acabamento.</p>
                         </div>
-                        <button type="button" onclick="adicionarLinhaProduto()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs px-4 py-2 rounded-xl transition cursor-pointer shadow">
-                            ➕ Adicionar Item
+                        <button type="button" onclick="adicionarLinhaProduto()" class="bg-yellow-400 hover:bg-yellow-300 text-black font-bold text-xs px-4 py-2 rounded-lg transition cursor-pointer shadow-md shadow-yellow-500/20 flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                            <span>Adicionar Item</span>
                         </button>
                     </div>
 
@@ -147,23 +161,23 @@
                 <!-- Linha 3: Valores e Status -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1.5">Desconto (R$)</label>
-                        <input type="number" step="any" min="0" id="ped-desconto" value="0.00" oninput="calcularTotalGlobal()" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-400">
+                        <label class="block text-xs font-bold text-zinc-400 uppercase mb-1.5">Desconto (R$)</label>
+                        <input type="number" step="any" min="0" id="ped-desconto" value="0.00" oninput="calcularTotalGlobal()" class="w-full bg-black border border-zinc-800 text-white rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1.5">Valor Pago pelo Cliente (R$)</label>
-                        <input type="number" step="any" min="0" id="ped-vpago" value="0.00" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-400">
+                        <label class="block text-xs font-bold text-zinc-400 uppercase mb-1.5">Valor Pago pelo Cliente (R$)</label>
+                        <input type="number" step="any" min="0" id="ped-vpago" value="0.00" class="w-full bg-black border border-zinc-800 text-white rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
                     </div>
-                    <div class="bg-slate-950 p-3.5 rounded-xl border border-amber-400/30 text-center flex flex-col justify-center">
-                        <p class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Total Líquido do Pedido</p>
-                        <p id="lbl-total" class="text-2xl font-black text-amber-400">R$ 0,00</p>
+                    <div class="bg-black p-4 rounded-xl border border-yellow-400/30 text-center flex flex-col justify-center">
+                        <p class="text-[11px] text-zinc-400 font-bold uppercase tracking-wider">Total Líquido do Pedido</p>
+                        <p id="lbl-total" class="text-2xl font-black text-yellow-400">R$ 0,00</p>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1.5">Status da Produção</label>
-                        <select id="ped-producao" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-amber-400">
+                        <label class="block text-xs font-bold text-zinc-400 uppercase mb-1.5">Status da Produção</label>
+                        <select id="ped-producao" class="w-full bg-black border border-zinc-800 text-white rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
                             <option value="PENDENTE">PENDENTE</option>
                             <option value="EM PRODUCAO">EM PRODUÇÃO</option>
                             <option value="AGUARDANDO RETIRADA">AGUARDANDO RETIRADA</option>
@@ -172,16 +186,16 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1.5">Status do Pagamento</label>
-                        <select id="ped-pagamento" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-amber-400">
+                        <label class="block text-xs font-bold text-zinc-400 uppercase mb-1.5">Status do Pagamento</label>
+                        <select id="ped-pagamento" class="w-full bg-black border border-zinc-800 text-white rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
                             <option value="PENDENTE">PENDENTE</option>
                             <option value="PARCIAL">PARCIAL</option>
                             <option value="PAGO">PAGO</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1.5">Forma de Pagamento</label>
-                        <select id="ped-forma-pagamento" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-amber-400">
+                        <label class="block text-xs font-bold text-zinc-400 uppercase mb-1.5">Forma de Pagamento</label>
+                        <select id="ped-forma-pagamento" class="w-full bg-black border border-zinc-800 text-white rounded-lg px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
                             <option value="">Selecione...</option>
                             <option value="Pix">Pix</option>
                             <option value="Débito">Débito</option>
@@ -194,22 +208,22 @@
 
                 <!-- Observações Gerais do Pedido -->
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1.5">Observações Gerais do Pedido / Entrega</label>
-                    <textarea id="ped-observacao" rows="2" placeholder="Ex: Entregar com urgência até sexta-feira, cliente retira no balcão..." class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-400 resize-none"></textarea>
+                    <label class="block text-xs font-bold text-zinc-400 uppercase mb-1.5">Observações Gerais do Pedido / Entrega</label>
+                    <textarea id="ped-observacao" rows="2" placeholder="Ex: Entregar com urgência até sexta-feira, cliente retira no balcão..." class="w-full bg-black border border-zinc-800 text-white placeholder-zinc-500 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent resize-none"></textarea>
                 </div>
 
                 <!-- Upload de Artes / Anexos -->
-                <div class="border border-slate-800 p-4 rounded-2xl bg-slate-950/50 space-y-3">
-                    <label class="block text-xs font-bold text-slate-400 uppercase">Imagens / Artes / Referências do Pedido</label>
-                    <input type="file" id="ped-imagens-input" multiple accept="image/*" class="w-full bg-slate-950 border border-slate-700 text-slate-300 rounded-xl px-3 py-2 text-xs file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-amber-400 file:text-slate-950 hover:file:bg-amber-300 cursor-pointer">
+                <div class="border border-zinc-800 p-4 rounded-xl bg-black/50 space-y-3">
+                    <label class="block text-xs font-bold text-zinc-400 uppercase">Imagens / Artes / Referências do Pedido</label>
+                    <input type="file" id="ped-imagens-input" multiple accept="image/*" class="w-full bg-black border border-zinc-800 text-zinc-300 rounded-lg px-3 py-2 text-xs file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-yellow-400 file:text-black hover:file:bg-yellow-300 cursor-pointer">
                     <div id="container-galeria-imagens" class="flex flex-wrap gap-3 pt-2"></div>
                 </div>
             </div>
 
-            <div class="flex flex-wrap justify-end gap-3 pt-4 border-t border-slate-800">
-                <button type="button" onclick="fecharModalPedido()" class="px-5 py-2.5 rounded-xl border border-slate-700 text-slate-300 font-bold hover:bg-slate-800 transition cursor-pointer">Cancelar</button>
-                <button type="button" onclick="salvarPedido(false)" class="px-6 py-2.5 rounded-xl bg-amber-400 text-slate-950 font-black hover:bg-amber-300 transition cursor-pointer shadow-lg">💾 Salvar Pedido</button>
-                <button type="button" onclick="salvarPedido(true)" class="px-6 py-2.5 rounded-xl bg-emerald-500 text-slate-950 font-black hover:bg-emerald-400 transition cursor-pointer shadow-lg">🖨️ Salvar e Imprimir</button>
+            <div class="flex flex-wrap justify-end gap-3 pt-4 border-t border-zinc-800">
+                <button type="button" onclick="fecharModalPedido()" class="px-5 py-2.5 rounded-lg border border-zinc-800 text-zinc-300 font-semibold hover:bg-zinc-800 transition cursor-pointer">Cancelar</button>
+                <button type="button" onclick="salvarPedido(false)" class="px-6 py-2.5 rounded-lg bg-yellow-400 text-black font-bold hover:bg-yellow-300 transition cursor-pointer shadow-lg shadow-yellow-500/20">Salvar Pedido</button>
+                <button type="button" onclick="salvarPedido(true)" class="px-6 py-2.5 rounded-lg bg-emerald-500 text-black font-bold hover:bg-emerald-400 transition cursor-pointer shadow-lg shadow-emerald-500/20">Salvar e Imprimir</button>
             </div>
         </div>
     </section>
@@ -217,68 +231,78 @@
     <!-- ==================================================================
          ABA 3: CONFIGURAÇÕES DA GRÁFICA E ATENDENTES
          ================================================================== -->
-    <section id="painel-aba-config" class="bee-tab-panel hidden">
+    <section id="painel-aba-config" class="hidden">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Card 1: Dados da Empresa e Impressão -->
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5 shadow-xl">
-                <div class="border-b border-slate-800 pb-3">
-                    <h2 class="text-lg font-black text-amber-400">🏢 Dados da Gráfica & Cabeçalho de Impressão</h2>
-                    <p class="text-xs text-slate-400 mt-0.5">Essas informações aparecem nos Cupons Térmicos, Ordens de Serviço e Orçamentos impressos.</p>
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-5 shadow-xl">
+                <div class="border-b border-zinc-800 pb-3">
+                    <h2 class="text-lg font-bold text-white">Dados da Gráfica & Cabeçalho de Impressão</h2>
+                    <p class="text-xs text-zinc-400 mt-0.5">Essas informações aparecem nos Cupons Térmicos, Ordens de Serviço e Orçamentos impressos.</p>
                 </div>
 
                 <form id="form-config-empresa" onsubmit="salvarConfiguracoesEmpresa(event)" class="space-y-4">
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Nome da Gráfica / Empresa</label>
-                        <input type="text" id="cfg-nome-empresa" placeholder="SISTEMA GRÁFICA" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-400">
+                        <label class="block text-xs font-bold text-zinc-400 uppercase mb-1">Nome da Gráfica / Empresa</label>
+                        <input type="text" id="cfg-nome-empresa" placeholder="BEE GRÁFICA" class="w-full bg-black border border-zinc-800 text-white rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">CNPJ / CPF</label>
-                            <input type="text" id="cfg-documento-empresa" placeholder="00.000.000/0001-00" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-400">
+                            <label class="block text-xs font-bold text-zinc-400 uppercase mb-1">CNPJ / CPF</label>
+                            <input type="text" id="cfg-documento-empresa" placeholder="00.000.000/0001-00" class="w-full bg-black border border-zinc-800 text-white rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Telefone / WhatsApp</label>
-                            <input type="text" id="cfg-telefone-empresa" placeholder="(00) 90000-0000" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-400">
+                            <label class="block text-xs font-bold text-zinc-400 uppercase mb-1">Telefone / WhatsApp</label>
+                            <input type="text" id="cfg-telefone-empresa" placeholder="(16) 99710-0623" class="w-full bg-black border border-zinc-800 text-white rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Endereço / Subtítulo</label>
-                        <input type="text" id="cfg-endereco-empresa" placeholder="Rua Exemplo, 123 - Centro" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-400">
+                        <label class="block text-xs font-bold text-zinc-400 uppercase mb-1">Endereço (Rua, Número, Bairro)</label>
+                        <input type="text" id="cfg-endereco-empresa" placeholder="Rua Exemplo, 123 - Centro" class="w-full bg-black border border-zinc-800 text-white rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="sm:col-span-2">
+                            <label class="block text-xs font-bold text-zinc-400 uppercase mb-1">Cidade</label>
+                            <input type="text" id="cfg-cidade-empresa" placeholder="Ex: Franca" class="w-full bg-black border border-zinc-800 text-white rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-zinc-400 uppercase mb-1">Estado (UF)</label>
+                            <input type="text" id="cfg-estado-empresa" placeholder="SP" maxlength="2" class="w-full bg-black border border-zinc-800 text-white rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent uppercase">
+                        </div>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Modelo de Impressão Padrão</label>
-                            <select id="cfg-modelo-impressao" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-400">
-                                <option value="os">📋 Ordem de Serviço (A4)</option>
-                                <option value="cupom">🧾 Cupom Térmico (80mm)</option>
-                                <option value="orcamento">📝 Orçamento (A4)</option>
+                            <label class="block text-xs font-bold text-zinc-400 uppercase mb-1">Modelo de Impressão Padrão</label>
+                            <select id="cfg-modelo-impressao" class="w-full bg-black border border-zinc-800 text-white rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
+                                <option value="os">Ordem de Serviço (A4)</option>
+                                <option value="cupom">Cupom Térmico (80mm)</option>
+                                <option value="orcamento">Orçamento (A4)</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Mensagem de Rodapé</label>
-                            <input type="text" id="cfg-obs-padrao" placeholder="Obrigado pela preferência!" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-400">
+                            <label class="block text-xs font-bold text-zinc-400 uppercase mb-1">Mensagem de Rodapé</label>
+                            <input type="text" id="cfg-obs-padrao" placeholder="Obrigado pela preferência!" class="w-full bg-black border border-zinc-800 text-white rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
                         </div>
                     </div>
                     <div class="flex justify-end pt-2">
-                        <button type="submit" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-black px-5 py-2.5 rounded-xl text-xs transition cursor-pointer shadow">
-                            💾 Salvar Configurações
+                        <button type="submit" class="bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-5 py-2.5 rounded-lg text-xs transition cursor-pointer shadow-lg shadow-yellow-500/20">
+                            Salvar Configurações
                         </button>
                     </div>
                 </form>
             </div>
 
             <!-- Card 2: Gestão de Atendentes / Operadores -->
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5 shadow-xl">
-                <div class="border-b border-slate-800 pb-3">
-                    <h2 class="text-lg font-black text-amber-400">👤 Equipe de Atendimento (Local)</h2>
-                    <p class="text-xs text-slate-400 mt-0.5">Cadastre ou atualize os operadores que utilizam o balcão de pedidos.</p>
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 space-y-5 shadow-xl">
+                <div class="border-b border-zinc-800 pb-3">
+                    <h2 class="text-lg font-bold text-white">Equipe de Atendimento (Local)</h2>
+                    <p class="text-xs text-zinc-400 mt-0.5">Cadastre ou atualize os operadores que utilizam o balcão de pedidos.</p>
                 </div>
 
                 <form onsubmit="salvarNovoAtendenteConfig(event)" class="flex flex-col sm:flex-row gap-3">
-                    <input type="text" id="novo-atendente-nome" required placeholder="Nome do Atendente" class="flex-1 bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-400">
-                    <input type="password" id="novo-atendente-senha" required placeholder="Senha de acesso" class="w-full sm:w-40 bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-amber-400">
-                    <button type="submit" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-4 py-2.5 rounded-xl text-xs transition cursor-pointer whitespace-nowrap">
-                        ➕ Salvar
+                    <input type="text" id="novo-atendente-nome" required placeholder="Nome do Atendente" class="flex-1 bg-black border border-zinc-800 text-white rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
+                    <input type="password" id="novo-atendente-senha" required placeholder="Senha de acesso" class="w-full sm:w-40 bg-black border border-zinc-800 text-white rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
+                    <button type="submit" class="bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-4 py-2.5 rounded-lg text-xs transition cursor-pointer whitespace-nowrap shadow-lg shadow-yellow-500/20">
+                        Salvar
                     </button>
                 </form>
 
@@ -290,5 +314,5 @@
 
 </div>
 
-<script type="module" src="/static/js/pedidos.js?v=2026d"></script>
+<script type="module" src="/static/js/pedidos.js?v=2026e"></script>
 {% endblock %}

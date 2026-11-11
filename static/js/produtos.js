@@ -52,20 +52,32 @@ async function salvarProduto(event) {
     try {
         await api.salvarProduto(id, payload);
         fecharModalProduto();
+        BeeHUD.success(id ? 'Produto atualizado com sucesso!' : 'Produto cadastrado com sucesso!');
         await carregarProdutos();
     } catch (error) {
         console.error('Erro ao salvar produto:', error);
-        alert(error.message);
+        BeeHUD.error(error.message || 'Erro ao salvar produto.');
     }
 }
 
 async function excluirProduto(id) {
-    if (!confirm('Tem certeza que deseja excluir este produto?')) return;
+    const ok = await BeeHUD.confirm({
+        titulo: 'Excluir Produto',
+        mensagem: 'Tem certeza que deseja excluir este produto do catálogo?',
+        confirmTexto: 'Sim, excluir',
+        tipo: 'danger'
+    });
+    if (!ok) return;
     try {
-        if (await api.excluirProduto(id)) await carregarProdutos();
-        else alert('Erro ao excluir produto.');
+        if (await api.excluirProduto(id)) {
+            BeeHUD.success('Produto excluído com sucesso!');
+            await carregarProdutos();
+        } else {
+            BeeHUD.error('Erro ao excluir produto.');
+        }
     } catch (error) {
         console.error('Erro ao excluir produto:', error);
+        BeeHUD.error('Falha de comunicação ao excluir produto.');
     }
 }
 

@@ -1,37 +1,47 @@
 {% extends "base.html" %}
 
-{% block title %}Produtos - Sistema da Empresa{% endblock %}
+{% block title %}Produtos & Quantidades — Bee Gráfica{% endblock %}
 
 {% block content %}
-<div class="p-8 space-y-8 bg-slate-950 w-full min-h-screen text-slate-100 pb-16">
+<div class="p-6 md:p-8 space-y-6 bg-black w-full min-h-screen text-white pb-16">
 
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-800 pb-4 gap-4">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-zinc-800 pb-5 gap-4">
         <div>
-            <h1 class="text-3xl font-black text-amber-400 tracking-wide flex items-center gap-3">
-                🏷️ PRODUTOS & QUANTIDADES
-            </h1>
-            <p class="text-sm text-slate-400 mt-1">Gerencie seu estoque e tabela de preços.</p>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-yellow-400/10 border border-yellow-400/20 flex items-center justify-center text-yellow-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-black text-white tracking-wide">PRODUTOS & QUANTIDADES</h1>
+                    <p class="text-xs md:text-sm text-zinc-400 mt-0.5">Gerencie seu catálogo, estoque e tabela de preços com precisão.</p>
+                </div>
+            </div>
         </div>
 
-        <button onclick="abrirModalProduto()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-5 py-2.5 rounded-xl transition flex items-center gap-2 shadow-lg shadow-amber-400/10 cursor-pointer">
-            ➕ Novo Produto
+        <button onclick="abrirModalProduto()" class="bg-yellow-400 hover:bg-yellow-300 text-black font-bold px-5 py-2.5 rounded-lg transition flex items-center gap-2 shadow-lg shadow-yellow-500/20 cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            <span>Novo Produto</span>
         </button>
     </div>
 
-    <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex flex-col md:flex-row gap-4 justify-between items-center shadow-xl">
+    <div class="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl flex flex-col md:flex-row gap-4 justify-between items-center shadow-xl">
         <div class="relative w-full md:w-96">
-            <input type="text" id="input-busca-produto" onkeyup="filtrarProdutos()" placeholder="Buscar produto..." class="w-full bg-slate-950 border border-slate-700 text-slate-100 text-sm rounded-xl pl-10 pr-4 py-2.5 outline-none focus:border-amber-400 transition">
-            <span class="absolute left-3.5 top-2.5 text-slate-500">🔍</span>
+            <input type="text" id="input-busca-produto" onkeyup="filtrarProdutos()" placeholder="Buscar produto por nome..." class="w-full bg-black border border-zinc-800 text-white placeholder-zinc-500 text-sm rounded-lg pl-10 pr-4 py-2.5 outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition">
+            <span class="absolute left-3.5 top-3 text-zinc-500">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </span>
         </div>
-        <div class="text-xs text-slate-400">
-            Total de Produtos: <span id="total-produtos-count" class="font-bold text-amber-400">0</span>
+        <div class="text-xs text-zinc-400">
+            Total de Produtos: <span id="total-produtos-count" class="font-bold text-yellow-400">0</span>
         </div>
     </div>
 
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm text-slate-300">
-                <thead class="bg-slate-950 text-slate-400 uppercase text-xs border-b border-slate-800">
+            <table class="w-full text-left text-sm text-zinc-300">
+                <thead class="bg-black text-zinc-400 uppercase text-xs border-b border-zinc-800 font-semibold tracking-wider">
                     <tr>
                         <th class="p-4">Cód.</th>
                         <th class="p-4">Nome do Produto</th>
@@ -40,43 +50,44 @@
                         <th class="p-4 text-center">Ações</th>
                     </tr>
                 </thead>
-                <tbody id="tabela-produtos-body" class="divide-y divide-slate-800/60">
-                    </tbody>
+                <tbody id="tabela-produtos-body" class="divide-y divide-zinc-800/80">
+                </tbody>
             </table>
         </div>
     </div>
 
 </div>
 
-<div id="modal-produto" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-    <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 space-y-6">
-        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-            <h2 id="modal-produto-titulo" class="text-xl font-bold text-amber-400">Novo Produto</h2>
-            <button onclick="fecharModalProduto()" class="text-slate-400 hover:text-white text-xl">✕</button>
+<!-- Modal Produto -->
+<div id="modal-produto" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-zinc-900 border border-zinc-800 w-full max-w-lg rounded-2xl shadow-2xl p-6 md:p-8 space-y-6">
+        <div class="flex justify-between items-center border-b border-zinc-800 pb-4">
+            <h2 id="modal-produto-titulo" class="text-xl font-bold text-white">Novo Produto</h2>
+            <button onclick="fecharModalProduto()" class="text-zinc-400 hover:text-white text-xl">✕</button>
         </div>
 
         <form id="form-produto" onsubmit="salvarProduto(event)" class="space-y-4">
             <input type="hidden" id="produto-id">
 
             <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Nome do Produto *</label>
-                <input type="text" id="produto-nome" required class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 outline-none focus:border-amber-400">
+                <label class="block text-xs font-bold text-zinc-400 uppercase mb-1.5">Nome do Produto *</label>
+                <input type="text" id="produto-nome" required placeholder="Ex: Banner Lona 440g, Cartão de Visita..." class="w-full bg-black border border-zinc-800 text-white placeholder-zinc-500 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Preço de Venda (R$) *</label>
-                    <input type="number" step="any" min="0" id="produto-preco" required placeholder="0.00" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 outline-none focus:border-amber-400">
+                    <label class="block text-xs font-bold text-zinc-400 uppercase mb-1.5">Preço de Venda (R$) *</label>
+                    <input type="number" step="any" min="0" id="produto-preco" required placeholder="0.00" class="w-full bg-black border border-zinc-800 text-white placeholder-zinc-500 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Quantidade em Estoque *</label>
-                    <input type="number" step="any" min="0" id="produto-quantidade" required placeholder="0" class="w-full bg-slate-950 border border-slate-700 text-slate-100 rounded-xl px-4 py-2.5 outline-none focus:border-amber-400">
+                    <label class="block text-xs font-bold text-zinc-400 uppercase mb-1.5">Quantidade em Estoque *</label>
+                    <input type="number" step="any" min="0" id="produto-quantidade" required placeholder="0" class="w-full bg-black border border-zinc-800 text-white placeholder-zinc-500 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
                 </div>
             </div>
 
-            <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
-                <button type="button" onclick="fecharModalProduto()" class="px-4 py-2.5 rounded-xl border border-slate-700 text-slate-300 font-bold hover:bg-slate-800 transition">Cancelar</button>
-                <button type="submit" class="px-5 py-2.5 rounded-xl bg-amber-400 text-slate-950 font-bold hover:bg-amber-300 transition">Salvar Produto</button>
+            <div class="flex justify-end gap-3 pt-4 border-t border-zinc-800">
+                <button type="button" onclick="fecharModalProduto()" class="px-5 py-2.5 rounded-lg border border-zinc-800 text-zinc-300 font-semibold hover:bg-zinc-800 transition cursor-pointer">Cancelar</button>
+                <button type="submit" class="px-6 py-2.5 rounded-lg bg-yellow-400 text-black font-bold hover:bg-yellow-300 transition cursor-pointer shadow-lg shadow-yellow-500/20">Salvar Produto</button>
             </div>
         </form>
     </div>

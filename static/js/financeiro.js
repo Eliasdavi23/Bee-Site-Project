@@ -67,30 +67,45 @@ async function salvarContaPagar(e) {
     if (ok) {
         ui.fecharModalNovaConta();
         ui.limparFormularioConta();
+        BeeHUD.success("Conta a pagar registrada com sucesso!");
         await carregarFinanceiro();
     } else {
-        alert("Erro ao salvar a conta.");
+        BeeHUD.error("Erro ao salvar a conta a pagar.");
     }
 }
 
 async function quitarConta(id) {
-    if (confirm("Marcar esta conta como PAGA?")) {
+    const okConfirm = await BeeHUD.confirm({
+        titulo: "Quitar Conta",
+        mensagem: "Deseja marcar esta conta como PAGA?",
+        confirmTexto: "Sim, quitar",
+        tipo: "question"
+    });
+    if (okConfirm) {
         const ok = await api.quitarContaAPI(id);
         if (ok) {
+            BeeHUD.success("Conta marcada como paga com sucesso!");
             await carregarFinanceiro();
         } else {
-            alert("Erro ao quitar conta.");
+            BeeHUD.error("Erro ao quitar conta.");
         }
     }
 }
 
 async function excluirConta(id) {
-    if (confirm("Deseja apagar este registro de conta?")) {
+    const okConfirm = await BeeHUD.confirm({
+        titulo: "Excluir Conta",
+        mensagem: "Deseja realmente apagar este registro de conta?",
+        confirmTexto: "Sim, apagar",
+        tipo: "danger"
+    });
+    if (okConfirm) {
         const ok = await api.deleteContaAPI(id);
         if (ok) {
+            BeeHUD.success("Registro de conta excluído com sucesso!");
             await carregarFinanceiro();
         } else {
-            alert("Erro ao excluir conta.");
+            BeeHUD.error("Erro ao excluir conta.");
         }
     }
 }

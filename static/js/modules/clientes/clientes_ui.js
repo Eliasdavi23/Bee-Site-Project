@@ -1,3 +1,5 @@
+// static/js/modules/clientes/clientes_ui.js
+
 export function renderizarTabela(dados) {
     const tbody = document.getElementById('tabela-clientes-body');
     const count = document.getElementById('total-clientes-count');
@@ -5,13 +7,28 @@ export function renderizarTabela(dados) {
     if (!tbody) return;
 
     if (!dados.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-slate-500">Nenhum cliente cadastrado.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-zinc-500 text-sm">Nenhum cliente cadastrado no momento.</td></tr>';
         return;
     }
 
     tbody.innerHTML = dados.map(c => {
         const json = JSON.stringify(c).replace(/"/g, '&quot;');
-        return `<tr class="hover:bg-slate-900/50 transition"><td class="p-4 font-bold text-amber-400">#${c.id}</td><td class="p-4 font-bold text-slate-100">${c.nome}</td><td class="p-4 text-slate-400">${c.cpf_cnpj || c.documento || '-'}</td><td class="p-4 text-slate-300">${c.telefone || '-'}</td><td class="p-4 text-slate-400">${c.email || '-'}</td><td class="p-4 text-center"><div class="flex items-center justify-center gap-2"><button type="button" onclick="abrirModalWhatsApp({tipo: 'saudacao', cliente_id: ${c.id}})" class="p-2 bg-emerald-950/70 hover:bg-emerald-800 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-bold transition cursor-pointer" title="Conversar no WhatsApp">💬 Whats</button><button type="button" onclick='editarCliente(${json})' class="p-2 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-lg text-xs font-bold transition cursor-pointer">Editar</button><button type="button" onclick="excluirCliente(${c.id})" class="p-2 bg-slate-800 hover:bg-rose-950 text-rose-400 rounded-lg text-xs font-bold transition cursor-pointer">Excluir</button></div></td></tr>`;
+        return `
+            <tr class="hover:bg-zinc-800/50 transition border-b border-zinc-800/80">
+                <td class="p-4 font-black text-yellow-400">#${c.id}</td>
+                <td class="p-4 font-bold text-white">${c.nome}</td>
+                <td class="p-4 text-zinc-400">${c.cpf_cnpj || c.documento || '-'}</td>
+                <td class="p-4 text-zinc-300">${c.telefone || '-'}</td>
+                <td class="p-4 text-zinc-400">${c.email || '-'}</td>
+                <td class="p-4 text-center">
+                    <div class="flex items-center justify-center gap-2">
+                        <button type="button" onclick="abrirModalWhatsApp({tipo: 'saudacao', cliente_id: ${c.id}})" class="px-2.5 py-1.5 bg-emerald-950/70 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-bold transition cursor-pointer" title="Conversar no WhatsApp">Whats</button>
+                        <button type="button" onclick='editarCliente(${json})' class="px-2.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-yellow-400 border border-zinc-700/60 rounded-lg text-xs font-bold transition cursor-pointer">Editar</button>
+                        <button type="button" onclick="excluirCliente(${c.id})" class="px-2.5 py-1.5 bg-zinc-800 hover:bg-rose-950 text-rose-400 border border-zinc-700/60 rounded-lg text-xs font-bold transition cursor-pointer">Excluir</button>
+                    </div>
+                </td>
+            </tr>
+        `;
     }).join('');
 }
 

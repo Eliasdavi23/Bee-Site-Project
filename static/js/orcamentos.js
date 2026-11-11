@@ -323,14 +323,14 @@ async function salvarOrcamento() {
     const clienteId = document.getElementById("orc-cliente")?.value;
 
     if (!clienteId) {
-        alert("Selecione um cliente para o orçamento.");
+        BeeHUD.warning("Selecione um cliente para o orçamento.");
         document.getElementById("orc-cliente-busca")?.focus();
         return;
     }
 
     const linhas = document.querySelectorAll("#container-produtos-orc > div");
     if (linhas.length === 0) {
-        alert("Adicione pelo menos um produto.");
+        BeeHUD.warning("Adicione pelo menos um produto.");
         return;
     }
 
@@ -357,7 +357,7 @@ async function salvarOrcamento() {
     });
 
     if (itens.length === 0) {
-        alert("Selecione os produtos na lista de sugestões corretamente.");
+        BeeHUD.warning("Selecione os produtos na lista de sugestões corretamente.");
         return;
     }
 
@@ -382,6 +382,8 @@ async function salvarOrcamento() {
 
         if (ok) {
             window.fecharModalOrcamento();
+            const idSalvo = orcamentoEditandoId || resultado?.id;
+            BeeHUD.success(orcamentoEditandoId ? `Orçamento #${orcamentoEditandoId} atualizado com sucesso!` : `Orçamento #${idSalvo} criado com sucesso!`);
             estado.orcamentos = await api.fetchOrcamentos();
             ui.renderizarTabela(estado.orcamentos);
         } else {
@@ -391,40 +393,52 @@ async function salvarOrcamento() {
                     ? resultado.detail
                     : JSON.stringify(resultado.detail);
             }
-            alert("Erro ao salvar:\n" + mensagemErro);
+            BeeHUD.error("Erro ao salvar: " + mensagemErro);
         }
     } catch (e) {
         console.error("Erro:", e);
-        alert("Erro de conexão com o servidor.");
+        BeeHUD.error("Erro de conexão com o servidor.");
     }
 }
 
 async function converterParaVenda(orcamentoId) {
-    if (!confirm(`Deseja aprovar o orçamento #${orcamentoId} e convertê-lo em Venda Oficial?`)) {
-        return;
-    }
+    const ok = await BeeHUD.confirm({
+        titulo: "Converter em Venda",
+        mensagem: `Deseja aprovar o orçamento #${orcamentoId} e convertê-lo em Venda Oficial?`,
+        confirmTexto: "Aprovar e Vender",
+        tipo: "question"
+    });
+    if (!ok) return;
 
     try {
-        const { ok, resultado } = await api.converterVendaAPI(orcamentoId);
-        if (ok) {
+        const { ok: apiOk, resultado } = await api.converterVendaAPI(orcamentoId);
+        if (apiOk) {
+            BeeHUD.success(`Orçamento #${orcamentoId} aprovado e convertido em Venda!`);
             estado.orcamentos = await api.fetchOrcamentos();
             ui.renderizarTabela(estado.orcamentos);
         } else {
-            alert("Erro ao converter: " + (resultado?.detail || "Verifique os dados."));
+            BeeHUD.error("Erro ao converter: " + (resultado?.detail || "Verifique os dados."));
         }
     } catch (error) {
         console.error("Erro:", error);
-        alert("Erro de conexão com o servidor.");
+        BeeHUD.error("Erro de conexão com o servidor.");
     }
 }
 
 async function excluirOrcamento(orcamentoId) {
-    if (!confirm(`Deseja realmente excluir o orçamento #${orcamentoId}?`)) return;
+    const ok = await BeeHUD.confirm({
+        titulo: "Excluir Orçamento",
+        mensagem: `Deseja realmente excluir o orçamento #${orcamentoId}?`,
+        confirmTexto: "Sim, excluir",
+        tipo: "danger"
+    });
+    if (!ok) return;
     if (await api.deleteOrcamentoAPI(orcamentoId)) {
+        BeeHUD.success(`Orçamento #${orcamentoId} excluído com sucesso!`);
         estado.orcamentos = await api.fetchOrcamentos();
         ui.renderizarTabela(estado.orcamentos);
     } else {
-        alert("Erro ao excluir orçamento.");
+        BeeHUD.error("Erro ao excluir orçamento.");
     }
 }
 
@@ -445,7 +459,7 @@ window.abrirModalOrcamento = () => {
     const lblAba = document.getElementById("lbl-aba-novo-orcamento");
 
     if (tituloModal) tituloModal.textContent = "Cadastrar Novo Orçamento";
-    if (btnSalvar) btnSalvar.textContent = "💾 Salvar Orçamento";
+    if (btnSalvar) btnSalvar.textContent = "Salvar Orçamento";
     if (lblAba) lblAba.textContent = "Novo Orçamento";
 
     const container = document.getElementById("container-produtos-orc");
@@ -486,7 +500,7 @@ window.abrirModalEdicaoOrcamento = async (orcamentoId) => {
         const lblAba = document.getElementById("lbl-aba-novo-orcamento");
 
         if (tituloModal) tituloModal.textContent = `Editar Orçamento #${orcamento.id}`;
-        if (btnSalvar) btnSalvar.textContent = `💾 Salvar Alterações (#${orcamento.id})`;
+        if (btnSalvar) btnSalvar.textContent = `Salvar Alterações (#${orcamento.id})`;
         if (lblAba) lblAba.textContent = `Editando #${orcamento.id}`;
 
         const cliInput = document.getElementById("orc-cliente");
@@ -539,10 +553,14 @@ window.abrirModalEdicaoOrcamento = async (orcamentoId) => {
         }
 
         window.calcularTotalOrcamento();
+        const acoesExtras = document.getElementById("acoes-extras-orcamento");
+        const btnPdf = document.getElementById("btn-pdf-modal-orcamento");
+        if (acoesExtras) acoesExtras.classList.remove("hidden");
+        if (btnPdf) btnPdf.href = `/api/orcamentos/${id}/pdf`;
         alternarAbaOrcamentos("novo");
     } catch (e) {
         console.error(e);
-        alert("Erro ao carregar orçamento para edição.");
+        BeeHUD.error("Erro ao carregar orçamento para edição.");
     }
 };
 
@@ -550,7 +568,57 @@ window.fecharModalOrcamento = () => {
     orcamentoEditandoId = null;
     const lblAba = document.getElementById("lbl-aba-novo-orcamento");
     if (lblAba) lblAba.textContent = "Novo Orçamento";
+    const acoesExtras = document.getElementById("acoes-extras-orcamento");
+    if (acoesExtras) acoesExtras.classList.add("hidden");
     alternarAbaOrcamentos("historico");
+};
+
+window.enviarOrcamentoAtualPdfWhatsApp = async () => {
+    if (!orcamentoEditandoId) return;
+    await window.enviarOrcamentoPdfWhatsApp(orcamentoEditandoId);
+};
+
+window.enviarOrcamentoPdfWhatsApp = async (orcamentoId) => {
+    if (!orcamentoId) return;
+    const btn = event?.currentTarget;
+    const textoOriginal = btn ? btn.innerHTML : "";
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `Enviando PDF...`;
+    }
+
+    try {
+        const resp = await fetch(`/api/orcamentos/${orcamentoId}/enviar-whatsapp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
+        });
+        const dados = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+            throw new Error(dados.detail || dados.mensagem || "Falha ao enviar PDF pelo WhatsApp.");
+        }
+
+        if (dados.enviado) {
+            BeeHUD.success(`Orçamento #${orcamentoId} enviado com sucesso em PDF pelo WhatsApp!`);
+        } else {
+            const okWeb = await BeeHUD.confirm({
+                titulo: "Aviso de Envio WhatsApp",
+                mensagem: `${dados.mensagem}\n\nDeseja abrir o WhatsApp Web para encaminhar a proposta manualmente?`,
+                confirmTexto: "Abrir WhatsApp Web",
+                tipo: "question"
+            });
+            if (okWeb && dados.link_web) {
+                window.open(dados.link_web, "_blank");
+            }
+        }
+    } catch (err) {
+        BeeHUD.error(err.message || "Erro ao processar envio do PDF.");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = textoOriginal;
+        }
+    }
 };
 
 window.adicionarLinhaProdutoOrcamento = () => {

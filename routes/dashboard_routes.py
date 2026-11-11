@@ -57,7 +57,7 @@ def obter_estatisticas(
             cursor.execute(f"""
                 SELECT COUNT(p.id) as fila_count 
                 FROM pedidos p 
-                {where_prod} UPPER(COALESCE(p.status_producao, '')) IN ('PENDENTE', 'EM PRODUCAO', 'EM PRODUÇÃO')
+                {where_prod} UPPER(COALESCE(p.status_producao, '')) IN ('PENDENTE', 'EM PRODUCAO', 'EM PRODUÇÃO', 'EM_PRODUCAO', 'EM_PRODUÇÃO')
             """, params)
             res_prod = cursor.fetchone()
             if res_prod:
@@ -141,7 +141,8 @@ def obter_estatisticas(
                 GROUP BY st
             """, params)
             for row in cursor.fetchall():
-                st = str(row["st"]).replace("EM PRODUÇÃO", "EM PRODUCAO").replace("ESPERANDO INSTALAÇÃO", "ESPERANDO INSTALACAO")
+                st = str(row["st"]).replace("_", " ").replace("EM PRODUÇÃO", "EM PRODUCAO").replace("ESPERANDO INSTALAÇÃO", "ESPERANDO INSTALACAO")
+                st = " ".join(st.split())
                 if st in status_producao:
                     status_producao[st] = int(row["quantidade"] or 0)
         except Exception as e:

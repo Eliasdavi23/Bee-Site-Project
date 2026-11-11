@@ -1,30 +1,11 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from routes.auth_routes import auth_required
+
 from controllers.produto_controller import ProdutoController
+from routes.auth_routes import auth_required
+from services.db_utils import parse_decimal
 
 router = APIRouter()
-
-
-def _parse_decimal(valor, padrao: float = 0.0) -> float:
-    if valor is None or valor == "":
-        return padrao
-    if isinstance(valor, (int, float)):
-        return float(valor)
-    texto = str(valor).strip().replace("R$", "").replace(" ", "")
-    if not texto:
-        return padrao
-    if "," in texto and "." in texto:
-        if texto.rfind(",") > texto.rfind("."):
-            texto = texto.replace(".", "").replace(",", ".")
-        else:
-            texto = texto.replace(",", "")
-    elif "," in texto:
-        texto = texto.replace(",", ".")
-    try:
-        return float(texto)
-    except ValueError:
-        return padrao
 
 
 class ProdutoSchema(BaseModel):
@@ -37,7 +18,6 @@ class ProdutoSchema(BaseModel):
 def listar_produtos(user: str = Depends(auth_required)):
     try:
         produtos = ProdutoController.listar_todos()
-        # Garante compatibilidade tanto com preco_venda quanto preco
         for p in produtos:
             p["preco"] = p.get("preco_venda", 0.0)
         return produtos
@@ -54,8 +34,8 @@ def criar_produto(p: ProdutoSchema, user: str = Depends(auth_required)):
     try:
         ProdutoController.salvar(
             nome=nome,
-            preco_venda=max(0.0, round(_parse_decimal(p.preco_venda, 0.0), 4)),
-            quantidade=max(0.0, round(_parse_decimal(p.quantidade, 0.0), 4))
+            preco_venda=max(0.0, round(parse_decimal(p.preco_venda, 0.0), 4)),
+            quantidade=max(0.0, round(parse_decimal(p.quantidade, 0.0), 4)),
         )
         return {"status": "ok", "sucesso": True}
     except Exception as e:
@@ -72,12 +52,22 @@ def atualizar_produto(produto_id: int, p: ProdutoSchema, user: str = Depends(aut
         ProdutoController.atualizar(
             p_id=produto_id,
             nome=nome,
-            preco_venda=max(0.0, round(_parse_decimal(p.preco_venda, 0.0), 4)),
-            quantidade=max(0.0, round(_parse_decimal(p.quantidade, 0.0), 4))
+            preco_venda=max(0.0, round(parse_decimal(p.preco_venda, 0.0), 4)),
+            quantidade=max(0.0, round(parse_decimal(p.quantidade, 0.0), 4)),
         )
         return {"status": "ok", "sucesso": True}
     except Exception as e:
         print(f"Erro ao atualizar produto: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/api/produtos")
+def excluir_todos_produtos(user: str = Depends(auth_required)):
+    try:
+        ProdutoController.excluir_todos()
+        return {"status": "ok", "sucesso": True, "mensagem": "Todos os produtos foram removidos com sucesso."}
+    except Exception as e:
+        print(f"Erro ao excluir todos os produtos: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
