@@ -6,3 +6,10 @@ __pycache__/
 *.py[cod]
 .env
 venv/
+whatsapp_bridge/node_modules/
+whatsapp_bridge/auth_info/
+
+# Uploads e imagens do sistema e pedidos
+static/uploads/
+
+!static/uploads/*/.gitkeep
