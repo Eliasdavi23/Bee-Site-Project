@@ -1,5 +1,16 @@
-import * as api from './modules/imprimir/imprimir_api.js?v=2026c';
-import * as ui from './modules/imprimir/imprimir_ui.js?v=2026c';
+import * as api from './modules/imprimir/imprimir_api.js?v=2026i';
+import * as ui from './modules/imprimir/imprimir_ui.js?v=2026i';
+
+// Mapeamento declarativo dos campos do formulário rápido da empresa
+const CAMPOS_EMPRESA = [
+    { id: 'imp-cfg-nome', key: 'nome_empresa', default: 'BEE GRÁFICA & COMUNICAÇÃO VISUAL' },
+    { id: 'imp-cfg-doc', key: 'documento_empresa', default: '' },
+    { id: 'imp-cfg-tel', key: 'telefone_empresa', default: '' },
+    { id: 'imp-cfg-email', key: 'email_empresa', default: '' },
+    { id: 'imp-cfg-end', key: 'endereco_empresa', default: '' },
+    { id: 'imp-cfg-cidade', key: 'cidade_empresa', default: '' },
+    { id: 'imp-cfg-estado', key: 'estado_empresa', default: '' }
+];
 
 let documentoCarregado = false;
 let modeloAtual = 'cupom';
@@ -8,6 +19,27 @@ let todosOsDocumentos = [];
 let configuracoesAtuais = {};
 
 document.addEventListener('DOMContentLoaded', inicializarImpressao);
+
+function preencherInputsEditorEmpresa(cfg = {}) {
+    CAMPOS_EMPRESA.forEach(({ id, key, default: defVal }) => {
+        const el = document.getElementById(id);
+        if (el) el.value = cfg[key] || defVal;
+    });
+}
+
+function coletarDadosEditorEmpresa() {
+    const payload = {
+        ...configuracoesAtuais,
+        subtitulo_empresa: configuracoesAtuais.subtitulo_empresa || 'Soluções Gráficas & Impressão Digital',
+        modelo_impressao_padrao: configuracoesAtuais.modelo_impressao_padrao || 'cupom',
+        obs_padrao_impressao: configuracoesAtuais.obs_padrao_impressao || 'Obrigado pela preferência!'
+    };
+    CAMPOS_EMPRESA.forEach(({ id, key, default: defVal }) => {
+        const el = document.getElementById(id);
+        payload[key] = (el?.value || '').trim() || defVal;
+    });
+    return payload;
+}
 
 async function carregarConfiguracoesIniciais() {
     try {
@@ -22,33 +54,21 @@ async function carregarConfiguracoesIniciais() {
     }
 }
 
-function preencherInputsEditorEmpresa(cfg = {}) {
-    const setVal = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.value = val || '';
-    };
-    setVal('imp-cfg-nome', cfg.nome_empresa || 'BEE GRÁFICA & COMUNICAÇÃO VISUAL');
-    setVal('imp-cfg-doc', cfg.documento_empresa || '');
-    setVal('imp-cfg-tel', cfg.telefone_empresa || '');
-    setVal('imp-cfg-email', cfg.email_empresa || '');
-    setVal('imp-cfg-end', cfg.endereco_empresa || '');
-}
-
 async function inicializarImpressao() {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
     tipoDocumentoAtual = params.get('tipo') === 'orcamento' ? 'orcamento' : 'pedido';
 
-    await carregarConfiguracoesIniciais();
-
     if (!id) {
+        await carregarConfiguracoesIniciais();
         await mostrarSeletorDocumentos();
         return;
     }
 
     try {
-        const resultado = await api.buscarDocumento(id, tipoDocumentoAtual);
+        const resultado = await api.buscarDocumento(id, tipoDocumentoAtual, configuracoesAtuais);
         if (!resultado) {
+            await carregarConfiguracoesIniciais();
             await mostrarSeletorDocumentos();
             return;
         }
@@ -64,6 +84,7 @@ async function inicializarImpressao() {
         ui.alternarModelo(modeloAtual);
     } catch (error) {
         console.error('Erro ao carregar documento para impressão:', error);
+        await carregarConfiguracoesIniciais();
         await mostrarSeletorDocumentos();
     }
 }
@@ -72,7 +93,7 @@ async function mostrarSeletorDocumentos() {
     try {
         todosOsDocumentos = await api.buscarTodosDocumentos();
     } catch (error) {
-        console.warn('Não foi possível carregar documentos:', error);
+        console.warn('Não foi possível carregar catálogo de documentos:', error);
     }
     ui.renderizarSeletorDocumentos(todosOsDocumentos);
 }
@@ -95,16 +116,7 @@ function toggleEditorEmpresaImpressao() {
 
 async function salvarDadosEmpresaRapido(event) {
     event?.preventDefault();
-    const payload = {
-        nome_empresa: document.getElementById('imp-cfg-nome')?.value || 'BEE GRÁFICA & COMUNICAÇÃO VISUAL',
-        subtitulo_empresa: configuracoesAtuais.subtitulo_empresa || 'Soluções Gráficas & Impressão Digital',
-        documento_empresa: document.getElementById('imp-cfg-doc')?.value || '',
-        telefone_empresa: document.getElementById('imp-cfg-tel')?.value || '',
-        email_empresa: document.getElementById('imp-cfg-email')?.value || '',
-        endereco_empresa: document.getElementById('imp-cfg-end')?.value || '',
-        modelo_impressao_padrao: configuracoesAtuais.modelo_impressao_padrao || 'cupom',
-        obs_padrao_impressao: configuracoesAtuais.obs_padrao_impressao || 'Obrigado pela preferência!'
-    };
+    const payload = coletarDadosEditorEmpresa();
 
     try {
         const res = await fetch('/api/configuracoes', {
@@ -117,19 +129,27 @@ async function salvarDadosEmpresaRapido(event) {
             configuracoesAtuais = data.configuracoes || payload;
             ui.aplicarDadosEmpresa(configuracoesAtuais, tipoDocumentoAtual === 'orcamento');
             document.getElementById('box-editar-empresa-impressao')?.classList.add('hidden');
+            BeeHUD.success('Dados da empresa salvos com sucesso!');
         } else {
-            alert('Erro ao salvar dados da empresa.');
+            BeeHUD.error('Erro ao salvar dados da empresa.');
         }
     } catch (e) {
-        alert('Erro de conexão ao salvar dados da empresa.');
+        BeeHUD.error('Erro de conexão ao salvar dados da empresa.');
     }
 }
 
 function filtrarListaDocumentos() {
-    const termo = document.getElementById('filtro-documentos')?.value.toLowerCase().trim() || '';
-    ui.renderizarListaDocumentos(todosOsDocumentos.filter(doc =>
-        [doc.id, doc.cliente_nome, doc.tipo].some(valor => String(valor || '').toLowerCase().includes(termo))
-    ));
+    const termo = (document.getElementById('filtro-documentos')?.value || '').toLowerCase().trim();
+    if (!termo) {
+        ui.renderizarListaDocumentos(todosOsDocumentos);
+        return;
+    }
+    const filtrados = todosOsDocumentos.filter(doc =>
+        [doc.id, doc.cliente_nome, doc.tipo].some(valor =>
+            String(valor || '').toLowerCase().includes(termo)
+        )
+    );
+    ui.renderizarListaDocumentos(filtrados);
 }
 
 function alternarModelo(tipo) {
@@ -139,7 +159,7 @@ function alternarModelo(tipo) {
 
 function validarEImprimir() {
     if (!documentoCarregado) {
-        alert('Selecione um pedido ou orçamento primeiro antes de acionar a impressão.');
+        BeeHUD.warning('Selecione um pedido ou orçamento primeiro antes de acionar a impressão.');
         mostrarSeletorDocumentos();
         return;
     }
@@ -148,6 +168,7 @@ function validarEImprimir() {
     window.print();
 }
 
+// Exportações globais para eventos de clique no template
 window.filtrarListaDocumentos = filtrarListaDocumentos;
 window.alternarModelo = alternarModelo;
 window.validarEImprimir = validarEImprimir;
