@@ -21,6 +21,8 @@ def _criar_tabelas_whatsapp(cursor):
             modo_auto INTEGER DEFAULT 1,
             precisa_atendente INTEGER DEFAULT 0,
             nao_lidas INTEGER DEFAULT 0,
+            aguardando_nome INTEGER DEFAULT 0,
+            atendente_nome TEXT DEFAULT '',
             ultima_mensagem TEXT DEFAULT '',
             ultima_mensagem_em TEXT,
             criada_em TEXT,
@@ -38,6 +40,8 @@ def _criar_tabelas_whatsapp(cursor):
             id_externo TEXT,
             usuario TEXT DEFAULT '',
             criada_em TEXT,
+            midia_url TEXT DEFAULT '',
+            midia_tipo TEXT DEFAULT '',
             FOREIGN KEY (conversa_id) REFERENCES whatsapp_conversas (id) ON DELETE CASCADE
         )
     """)
@@ -53,7 +57,7 @@ def _criar_tabelas_whatsapp(cursor):
     cursor.executemany("""
         INSERT OR IGNORE INTO configuracoes (chave, valor) VALUES (?, ?)
     """, [
-        ('whatsapp_auto_resposta', '0'),  # Robô só responde sozinho depois que um gestor ligar
+        ('whatsapp_auto_resposta', '0'),  # Sem mensagens automáticas de IA (apenas aviso de ligação)
         ('whatsapp_aviso_status', '1'),   # Avisar cliente quando o status do pedido mudar
     ])
 
@@ -178,6 +182,8 @@ def init_db():
             ('subtitulo_empresa', 'Gestão Interna & Produção Gráfica'),
             ('documento_empresa', ''),
             ('telefone_empresa', ''),
+            ('cidade_empresa', 'Franca'),
+            ('estado_empresa', 'SP'),
             ('endereco_empresa', ''),
             ('modelo_impressao_padrao', 'os'),
             ('obs_padrao_impressao', 'Obrigado pela preferência!')
@@ -223,6 +229,20 @@ def init_db():
             cursor.execute("ALTER TABLE contas_a_pagar ADD COLUMN dia_vencimento INTEGER")
 
         cursor.execute("UPDATE pedidos SET usuario_nome = 'Thaissa' WHERE usuario_nome = 'Thaissa/Michel'")
+
+        cursor.execute("PRAGMA table_info(whatsapp_mensagens)")
+        colunas_wa_msg = [coluna[1] for coluna in cursor.fetchall()]
+        if 'midia_url' not in colunas_wa_msg:
+            cursor.execute("ALTER TABLE whatsapp_mensagens ADD COLUMN midia_url TEXT DEFAULT ''")
+        if 'midia_tipo' not in colunas_wa_msg:
+            cursor.execute("ALTER TABLE whatsapp_mensagens ADD COLUMN midia_tipo TEXT DEFAULT ''")
+
+        cursor.execute("PRAGMA table_info(whatsapp_conversas)")
+        colunas_wa_conv = [coluna[1] for coluna in cursor.fetchall()]
+        if 'aguardando_nome' not in colunas_wa_conv:
+            cursor.execute("ALTER TABLE whatsapp_conversas ADD COLUMN aguardando_nome INTEGER DEFAULT 0")
+        if 'atendente_nome' not in colunas_wa_conv:
+            cursor.execute("ALTER TABLE whatsapp_conversas ADD COLUMN atendente_nome TEXT DEFAULT ''")
 
         conn.commit()
     finally:

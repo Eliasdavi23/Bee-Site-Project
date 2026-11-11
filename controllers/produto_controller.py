@@ -41,3 +41,18 @@ class ProdutoController:
             conn.commit()
         finally:
             conn.close()
+
+    @staticmethod
+    def excluir_todos():
+        conn = get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE itens_pedido SET produto_id = NULL WHERE produto_id IS NOT NULL")
+            cursor.execute("DELETE FROM produtos")
+            try:
+                cursor.execute("DELETE FROM sqlite_sequence WHERE name='produtos'")
+            except Exception:
+                pass
+            conn.commit()
+        finally:
+            conn.close()

@@ -1,40 +1,58 @@
 from config.database import get_connection
 from services.db_utils import fetch_all_as_dicts
 
+
 class ClienteController:
 
     @staticmethod
-    def listar_todos():
+    def listar_todos() -> list[dict]:
         return fetch_all_as_dicts("SELECT * FROM clientes ORDER BY id DESC")
 
     @staticmethod
-    def salvar(nome="", telefone="", email="", c_id=None):
+    def criar(nome: str, documento: str = "", telefone: str = "", email: str = "", endereco: str = "") -> int:
         conn = get_connection()
-        cursor = conn.cursor()
-        
-        if c_id:
+        try:
+            cursor = conn.cursor()
             cursor.execute(
-                "UPDATE clientes SET nome=?, telefone=?, email=? WHERE id=?",
-                (nome, telefone, email, c_id)
+                "INSERT INTO clientes (nome, documento, telefone, email, endereco) VALUES (?, ?, ?, ?, ?)",
+                (nome, documento, telefone, email, endereco),
             )
-        else:
-            # O SQLite gera o ID incremental automaticamente
-            cursor.execute(
-                "INSERT INTO clientes (nome, telefone, email) VALUES (?, ?, ?)",
-                (nome, telefone, email)
-            )
-            
-        conn.commit()
-        conn.close()
+            conn.commit()
+            return cursor.lastrowid
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
 
     @staticmethod
-    def atualizar(c_id, nome, telefone, email):
-        ClienteController.salvar(nome=nome, telefone=telefone, email=email, c_id=c_id)
+    def atualizar(
+        c_id: int, nome: str, documento: str = "", telefone: str = "", email: str = "", endereco: str = ""
+    ) -> None:
+        conn = get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE clientes SET nome=?, documento=?, telefone=?, email=?, endereco=? WHERE id=?",
+                (nome, documento, telefone, email, endereco, c_id),
+            )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
 
     @staticmethod
-    def excluir(c_id):
+    def excluir(c_id: int) -> None:
         conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM clientes WHERE id=?", (c_id,))
-        conn.commit()
-        conn.close()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE pedidos SET cliente_id = NULL WHERE cliente_id = ?", (c_id,))
+            cursor.execute("DELETE FROM clientes WHERE id=?", (c_id,))
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
