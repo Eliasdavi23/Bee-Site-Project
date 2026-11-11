@@ -1,11 +1,12 @@
 """
 Provedores de envio do WhatsApp.
 
-- link       -> não envia sozinho: gera o link wa.me para o funcionário clicar (sem conta externa)
+- bridge     -> Ponte Local com QR Code integrado ao próprio sistema (tempo real 100% interno)
+- link       -> não envia sozinho: gera os links wa.me e WhatsApp Web para o funcionário clicar
 - evolution  -> Evolution API (instalada no seu PC/servidor, conecta via QR Code)
 - cloud      -> WhatsApp Cloud API oficial da Meta
 
-Todos devolvem um ResultadoEnvio com o link wa.me como plano B,
+Todos devolvem um ResultadoEnvio com `link` (wa.me) e `link_web` (web.whatsapp.com) como plano B,
 assim o atendimento nunca trava se o envio automático falhar.
 """
 import json
@@ -15,16 +16,18 @@ import urllib.request
 from dataclasses import dataclass
 from urllib.parse import quote
 
+from services.whatsapp import bridge_manager
 from services.whatsapp import config as cfg
-from services.whatsapp.telefone import link_whatsapp
+from services.whatsapp.telefone import link_whatsapp, link_whatsapp_web
 
 logger = logging.getLogger("uvicorn.error")
 
 
 @dataclass
 class ResultadoEnvio:
-    enviado: bool          # True = saiu automaticamente pela API
+    enviado: bool          # True = saiu automaticamente pela API / Ponte Local
     link: str              # link wa.me sempre disponível
+    link_web: str = ""     # link direto para web.whatsapp.com
     id_externo: str = ""
     erro: str = ""
 
@@ -58,7 +61,29 @@ class ProvedorLink:
     automatico = False
 
     def enviar_texto(self, telefone: str, texto: str) -> ResultadoEnvio:
-        return ResultadoEnvio(enviado=False, link=link_whatsapp(telefone, texto))
+        return ResultadoEnvio(
+            enviado=False,
+            link=link_whatsapp(telefone, texto),
+            link_web=link_whatsapp_web(telefone, texto),
+        )
+
+
+class ProvedorBridge:
+    """Envia mensagens diretamente pela Ponte Local conectada via QR Code no painel."""
+    nome = cfg.PROVEDOR_BRIDGE
+    automatico = True
+
+    def enviar_texto(self, telefone: str, texto: str) -> ResultadoEnvio:
+        link = link_whatsapp(telefone, texto)
+        link_web = link_whatsapp_web(telefone, texto)
+        enviado, id_externo, erro = bridge_manager.enviar_via_bridge(telefone, texto)
+        return ResultadoEnvio(
+            enviado=enviado,
+            link=link,
+            link_web=link_web,
+            id_externo=id_externo,
+            erro=erro,
+        )
 
 
 class ProvedorEvolution:
@@ -70,6 +95,7 @@ class ProvedorEvolution:
 
     def enviar_texto(self, telefone: str, texto: str) -> ResultadoEnvio:
         link = link_whatsapp(telefone, texto)
+        link_web = link_whatsapp_web(telefone, texto)
         url = f"{self.conf.evolution_url}/message/sendText/{quote(self.conf.evolution_instancia, safe='')}"
         try:
             dados = _post_json(
@@ -78,9 +104,9 @@ class ProvedorEvolution:
             )
         except ErroProvedor as exc:
             logger.warning("Evolution API: %s", exc)
-            return ResultadoEnvio(enviado=False, link=link, erro=str(exc))
+            return ResultadoEnvio(enviado=False, link=link, link_web=link_web, erro=str(exc))
         id_externo = str(((dados.get("key") or {}).get("id")) or "")
-        return ResultadoEnvio(enviado=True, link=link, id_externo=id_externo)
+        return ResultadoEnvio(enviado=True, link=link, link_web=link_web, id_externo=id_externo)
 
 
 class ProvedorCloud:
@@ -92,6 +118,7 @@ class ProvedorCloud:
 
     def enviar_texto(self, telefone: str, texto: str) -> ResultadoEnvio:
         link = link_whatsapp(telefone, texto)
+        link_web = link_whatsapp_web(telefone, texto)
         url = (
             f"https://graph.facebook.com/{self.conf.cloud_api_versao}/"
             f"{quote(self.conf.cloud_phone_number_id, safe='')}/messages"
@@ -108,12 +135,12 @@ class ProvedorCloud:
                 {"Authorization": f"Bearer {self.conf.cloud_token}"}, self.conf.timeout_segundos,
             )
         except ErroProvedor as exc:
-            # Observação: fora da janela de 24h após a última mensagem do cliente,
-            # a Meta só aceita mensagens de modelo (template) aprovadas.
             logger.warning("WhatsApp Cloud API: %s", exc)
-            return ResultadoEnvio(enviado=False, link=link, erro=str(exc))
+            return ResultadoEnvio(enviado=False, link=link, link_web=link_web, erro=str(exc))
         mensagens = dados.get("messages") or [{}]
-        return ResultadoEnvio(enviado=True, link=link, id_externo=str(mensagens[0].get("id") or ""))
+        return ResultadoEnvio(
+            enviado=True, link=link, link_web=link_web, id_externo=str(mensagens[0].get("id") or "")
+        )
 
 
 def obter_provedor(conf: cfg.ConfigWhatsApp | None = None):
@@ -122,4 +149,6 @@ def obter_provedor(conf: cfg.ConfigWhatsApp | None = None):
         return ProvedorEvolution(conf)
     if conf.provedor == cfg.PROVEDOR_CLOUD:
         return ProvedorCloud(conf)
+    if conf.provedor == cfg.PROVEDOR_BRIDGE or bridge_manager.obter_status_bridge().get("conectado"):
+        return ProvedorBridge()
     return ProvedorLink()

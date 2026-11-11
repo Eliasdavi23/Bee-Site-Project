@@ -77,6 +77,62 @@ def _linha_pedido(p: dict, itens: list[str]) -> str:
     )
 
 
+def listar_pedidos_recentes_cliente(cliente_id: int | None, limite: int = LIMITE_PEDIDOS_CONTEXTO) -> list[dict]:
+    """Retorna os pedidos de venda recentes do cliente com seus itens."""
+    if not cliente_id:
+        return []
+    conn = get_connection()
+    try:
+        pedidos = [
+            dict(r)
+            for r in conn.execute(
+                "SELECT id, data, valor_total, valor_pago, status_producao, status_pagamento "
+                "FROM pedidos WHERE cliente_id = ? AND (tipo = 'VENDA' OR tipo IS NULL OR tipo = '') "
+                "ORDER BY id DESC LIMIT ?",
+                (cliente_id, limite),
+            ).fetchall()
+        ]
+        for p in pedidos:
+            p["itens"] = [
+                dict(r)
+                for r in conn.execute(
+                    "SELECT nome_produto, quantidade FROM itens_pedido WHERE pedido_id = ? ORDER BY id LIMIT 6",
+                    (p["id"],),
+                ).fetchall()
+            ]
+        return pedidos
+    finally:
+        conn.close()
+
+
+def listar_orcamentos_recentes_cliente(cliente_id: int | None, limite: int = LIMITE_ORCAMENTOS_CONTEXTO) -> list[dict]:
+    """Retorna os orçamentos recentes do cliente com seus itens."""
+    if not cliente_id:
+        return []
+    conn = get_connection()
+    try:
+        orcamentos = [
+            dict(r)
+            for r in conn.execute(
+                "SELECT id, data, valor_total, desconto, observacao "
+                "FROM pedidos WHERE cliente_id = ? AND tipo = 'ORCAMENTO' "
+                "ORDER BY id DESC LIMIT ?",
+                (cliente_id, limite),
+            ).fetchall()
+        ]
+        for o in orcamentos:
+            o["itens"] = [
+                dict(r)
+                for r in conn.execute(
+                    "SELECT nome_produto, quantidade FROM itens_pedido WHERE pedido_id = ? ORDER BY id LIMIT 6",
+                    (o["id"],),
+                ).fetchall()
+            ]
+        return orcamentos
+    finally:
+        conn.close()
+
+
 def montar_contexto_cliente(cliente_id: int | None) -> str:
     """Resumo em texto dos pedidos/orçamentos recentes do cliente, para a IA consultar."""
     if not cliente_id:

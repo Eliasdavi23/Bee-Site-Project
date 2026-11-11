@@ -6,9 +6,10 @@ from dataclasses import dataclass
 logger = logging.getLogger("uvicorn.error")
 
 PROVEDOR_LINK = "link"
+PROVEDOR_BRIDGE = "bridge"
 PROVEDOR_EVOLUTION = "evolution"
 PROVEDOR_CLOUD = "cloud"
-PROVEDORES_VALIDOS = (PROVEDOR_LINK, PROVEDOR_EVOLUTION, PROVEDOR_CLOUD)
+PROVEDORES_VALIDOS = (PROVEDOR_LINK, PROVEDOR_BRIDGE, PROVEDOR_EVOLUTION, PROVEDOR_CLOUD)
 
 
 def _env(nome: str, padrao: str = "") -> str:
@@ -53,7 +54,7 @@ class ConfigWhatsApp:
     @property
     def provedor(self) -> str:
         """Provedor efetivo: se faltar configuração, cai com segurança para o modo link."""
-        if self.provedor_solicitado != PROVEDOR_LINK and self.pendencias:
+        if self.provedor_solicitado not in (PROVEDOR_LINK, PROVEDOR_BRIDGE) and self.pendencias:
             return PROVEDOR_LINK
         return self.provedor_solicitado
 

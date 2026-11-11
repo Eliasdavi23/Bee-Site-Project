@@ -8,6 +8,7 @@ from services import ia_service
 from services.whatsapp import atendimento, contexto
 from services.whatsapp import repositorio as repo
 from services.whatsapp.mensagens import (
+    normalizar_status_producao,
     STATUS_AVISAVEIS,
     TIPOS_MENSAGEM,
     msg_cobranca,
@@ -16,7 +17,7 @@ from services.whatsapp.mensagens import (
     msg_status_pedido,
 )
 from services.whatsapp.seguranca import limpar_texto
-from services.whatsapp.telefone import formatar_exibicao, link_whatsapp, normalizar_telefone
+from services.whatsapp.telefone import formatar_exibicao, link_whatsapp, link_whatsapp_web, normalizar_telefone
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -50,12 +51,13 @@ def gerar_rascunho(
     tipo: str,
     pedido_id: int | None = None,
     cliente_id: int | None = None,
+    telefone_manual: str = "",
     usar_ia: bool = True,
     instrucao_extra: str = "",
 ) -> dict:
     """
     Prepara o texto e os dados do destinatário para o modal de WhatsApp
-    nas telas de Pedidos, Orçamentos e Clientes.
+    nas telas de Pedidos, Orçamentos, Clientes e Atendimento.
     """
     tipo = (tipo or "status_pedido").strip().lower()
     if tipo not in TIPOS_MENSAGEM:
@@ -63,7 +65,7 @@ def gerar_rascunho(
 
     empresa = repo.dados_empresa()
     nome_cliente = ""
-    telefone_bruto = ""
+    telefone_bruto = (telefone_manual or "").strip()
 
     if tipo in ("status_pedido", "cobranca", "orcamento"):
         if not pedido_id:
@@ -72,7 +74,7 @@ def gerar_rascunho(
         if not registro:
             raise atendimento.ErroAtendimento("Registro não encontrado.")
         nome_cliente = registro.get("cliente_nome") or "Cliente"
-        telefone_bruto = registro.get("cliente_telefone") or ""
+        telefone_bruto = telefone_bruto or (registro.get("cliente_telefone") or "")
         cliente_id = registro.get("cliente_id")
 
         if tipo == "cobranca":
@@ -86,16 +88,18 @@ def gerar_rascunho(
         if pedido_id and not cliente_id:
             registro = contexto.obter_pedido_completo(pedido_id)
             cliente_id = registro.get("cliente_id") if registro else None
-        if not cliente_id:
-            raise atendimento.ErroAtendimento("Selecione um cliente.")
-        cliente = contexto.obter_cliente(cliente_id)
-        if not cliente:
-            raise atendimento.ErroAtendimento("Cliente não encontrado.")
-        nome_cliente = cliente.get("nome") or "Cliente"
-        telefone_bruto = cliente.get("telefone") or ""
-        texto_base = msg_saudacao(cliente, empresa)
+        if cliente_id:
+            cliente = contexto.obter_cliente(cliente_id)
+            if not cliente:
+                raise atendimento.ErroAtendimento("Cliente não encontrado.")
+            nome_cliente = cliente.get("nome") or "Cliente"
+            telefone_bruto = telefone_bruto or (cliente.get("telefone") or "")
+            texto_base = msg_saudacao(cliente, empresa)
+        else:
+            nome_cliente = "Contato WhatsApp"
+            texto_base = msg_saudacao({"nome": ""}, empresa)
 
-    telefone = normalizar_telefone(telefone_bruto)
+    telefone = normalizar_telefone(telefone_bruto, aceitar_sem_ddd=True)
     origem = "modelo"
     texto_final = texto_base
     if usar_ia:
@@ -107,11 +111,13 @@ def gerar_rascunho(
         "pedido_id": pedido_id,
         "cliente_id": cliente_id,
         "cliente_nome": nome_cliente,
+        "telefone_bruto": telefone_bruto,
         "telefone_valido": bool(telefone),
         "telefone_exibicao": formatar_exibicao(telefone or telefone_bruto) or "Sem telefone",
         "texto": texto_final,
         "origem": origem,
         "link": link_whatsapp(telefone, texto_final) if telefone else "",
+        "link_web": link_whatsapp_web(telefone, texto_final) if telefone else "",
     }
 
 
@@ -123,12 +129,12 @@ def notificar_mudanca_status(
 ) -> dict | None:
     """
     Chamado quando um pedido é salvo ou tem seu status alterado.
-    - Só dispara se o status realmente mudou para um status relevante (ex.: EM PRODUCAO, AGUARDANDO RETIRADA, FINALIZADO).
+    - Só dispara se o status realmente mudou para um status relevante.
     - Se o provedor for automático (Evolution/Cloud), envia em segundo plano e registra na conversa.
-    - No modo link (híbrido), devolve o link wa.me pronto para o frontend oferecer o envio em 1 clique.
+    - No modo link (híbrido), devolve os links wa.me e WhatsApp Web prontos.
     """
-    antigo = str(status_anterior or "").strip().upper()
-    novo = str(novo_status or "").strip().upper()
+    antigo = normalizar_status_producao(status_anterior) if status_anterior else ""
+    novo = normalizar_status_producao(novo_status) if novo_status else ""
     if not novo or novo == antigo or novo not in STATUS_AVISAVEIS:
         return None
 
@@ -139,7 +145,7 @@ def notificar_mudanca_status(
     if not pedido or str(pedido.get("tipo") or "VENDA").upper() == "ORCAMENTO":
         return None
 
-    telefone = normalizar_telefone(pedido.get("cliente_telefone"))
+    telefone = normalizar_telefone(pedido.get("cliente_telefone"), aceitar_sem_ddd=True)
     if not telefone:
         return None
 
@@ -164,6 +170,7 @@ def notificar_mudanca_status(
             "enviado": False,
             "modo": "link",
             "link": link_whatsapp(telefone, texto),
+            "link_web": link_whatsapp_web(telefone, texto),
             "texto": texto,
             "cliente_nome": pedido.get("cliente_nome") or "Cliente",
             "telefone_exibicao": formatar_exibicao(telefone),
