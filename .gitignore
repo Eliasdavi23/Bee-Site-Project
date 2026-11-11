@@ -8,8 +8,9 @@ __pycache__/
 venv/
 whatsapp_bridge/node_modules/
 whatsapp_bridge/auth_info/
+whatsapp_bridge/log_node.txt
+*.log
 
 # Uploads e imagens do sistema e pedidos
 static/uploads/
-
 !static/uploads/*/.gitkeep
