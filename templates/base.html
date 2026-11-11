@@ -1,124 +1,81 @@
 <!DOCTYPE html>
-<html lang="pt-br" class="h-full bg-slate-950">
+<html lang="pt-br" class="h-full bg-black">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Sistema da Empresa{% endblock %}</title>
     <link rel="icon" type="image/png" href="/static/uploads/logo.png">
     <link rel="shortcut icon" type="image/png" href="/static/uploads/logo.png">
-    <link rel="stylesheet" href="/static/css/style.css?v=2026b">
+    <link rel="stylesheet" href="/static/css/style.css?v=2026c">
     <script src="/static/js/vendor/tailwind.js"></script>
+    <script src="/static/js/hud.js?v=2026a"></script>
 </head>
-<body class="bee-app-shell bg-slate-950 font-sans text-slate-100 antialiased m-0 p-0">
-
-    <!-- MENU LATERAL FIXO (SIDEBAR) -->
-    <aside id="sidebar-navegacao" class="bee-sidebar no-print print:hidden">
-        <div class="bee-sidebar-top">
-            <a href="/pedidos" class="bee-brand-box">
-                <img src="/static/uploads/logo.png" alt="Logo da empresa" class="bee-brand-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                <div class="bee-brand-fallback">
-                    <span class="text-lg font-black tracking-wider text-amber-400">🐝 SISTEMA GRÁFICA</span>
-                    <span class="text-[11px] text-slate-400">Gestão Interna Local</span>
-                </div>
-            </a>
-
-            <div class="bee-nav-section-label">MÓDULOS DO SISTEMA</div>
-
-            <nav class="bee-sidebar-nav" aria-label="Menu Principal">
-                <a href="/pedidos" class="bee-nav-link {% if page == 'pedidos' %}active{% endif %}">
-                    <span class="bee-nav-icon">📦</span>
-                    <span>Pedidos & Vendas</span>
-                </a>
-                <a href="/orcamentos" class="bee-nav-link {% if page == 'orcamentos' %}active{% endif %}">
-                    <span class="bee-nav-icon">📋</span>
-                    <span>Orçamentos</span>
-                </a>
-                <a href="/produtos" class="bee-nav-link {% if page == 'produtos' %}active{% endif %}">
-                    <span class="bee-nav-icon">🏷️</span>
-                    <span>Produtos & Estoque</span>
-                </a>
-                <a href="/clientes" class="bee-nav-link {% if page == 'clientes' %}active{% endif %}">
-                    <span class="bee-nav-icon">👥</span>
-                    <span>Clientes</span>
-                </a>
-                <a href="/dashboard" class="bee-nav-link {% if page == 'dashboard' %}active{% endif %}">
-                    <span class="bee-nav-icon">📊</span>
-                    <span>Dashboard</span>
-                </a>
-                <a href="/imprimir" class="bee-nav-link {% if page == 'imprimir' %}active{% endif %}">
-                    <span class="bee-nav-icon">🖨️</span>
-                    <span>Central de Impressão</span>
-                </a>
-                <a href="/atendimento" class="bee-nav-link {% if page == 'atendimento' %}active{% endif %}">
-                    <span class="bee-nav-icon">💬</span>
-                    <span>Atendimento WhatsApp</span>
-                </a>
-                </a>
-
-                {% if user and user.lower() in ['admin', 'thaissa', 'michel', 'thaissa/michel'] %}
-                <a href="/financeiro" class="bee-nav-link bee-nav-link-financeiro {% if page == 'financeiro' %}active{% endif %}">
-                    <span class="bee-nav-icon">💰</span>
-                    <span>Financeiro Pro</span>
-                </a>
-                {% endif %}
-            </nav>
-        </div>
-
-        <div class="bee-sidebar-footer">
-            <div class="text-xs">
-                <p class="text-slate-400">Operador ativo:</p>
-                <p class="font-bold text-sm text-amber-400 capitalize">{{ user or 'Admin' }}</p>
-            </div>
-            <a href="/logout" class="bg-rose-600 hover:bg-rose-500 text-white text-xs px-3 py-2 rounded-lg font-bold transition shadow">Sair</a>
-        </div>
-    </aside>
+<body class="bee-app-shell flex flex-col w-full h-full min-h-screen bg-black font-sans text-white antialiased m-0 p-0 selection:bg-yellow-400 selection:text-black">
 
     <!-- ÁREA PRINCIPAL + BARRA DE NAVEGAÇÃO SUPERIOR -->
-    <div class="bee-main-wrapper">
-        <header id="barra-topo-navegacao" class="bee-topbar no-print print:hidden">
+    <div class="bee-main-wrapper w-full flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        <header id="barra-topo-navegacao" class="bee-topbar w-full bg-zinc-900/95 border-b border-zinc-800 backdrop-blur-md no-print print:hidden">
             <div class="bee-topbar-inner">
-                <div class="bee-topbar-brand">
-                    <span class="text-amber-400 font-black text-sm tracking-wide">🐝 GRÁFICA</span>
-                </div>
+                <a href="/pedidos" class="bee-topbar-brand flex items-center gap-2.5 shrink-0 text-decoration-none hover:opacity-90 transition">
+                    <img src="/static/uploads/logo.png" alt="Logo Bee Gráfica" class="h-7 w-auto object-contain rounded-md" onerror="this.style.display='none';">
+                    <span class="text-yellow-400 font-black text-sm tracking-wide">BEE GRÁFICA</span>
+                </a>
 
                 <nav class="bee-topbar-nav" aria-label="Navegação Rápida entre Funcionalidades">
                     <a href="/pedidos" class="bee-topnav-pill {% if page == 'pedidos' %}active{% endif %}">
-                        <span>📦</span> <span>Pedidos</span>
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                        <span>Pedidos</span>
                     </a>
                     <a href="/orcamentos" class="bee-topnav-pill {% if page == 'orcamentos' %}active{% endif %}">
-                        <span>📋</span> <span>Orçamentos</span>
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span>Orçamentos</span>
                     </a>
                     <a href="/produtos" class="bee-topnav-pill {% if page == 'produtos' %}active{% endif %}">
-                        <span>🏷️</span> <span>Produtos</span>
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                        <span>Produtos</span>
                     </a>
                     <a href="/clientes" class="bee-topnav-pill {% if page == 'clientes' %}active{% endif %}">
-                        <span>👥</span> <span>Clientes</span>
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                        <span>Clientes</span>
                     </a>
                     <a href="/dashboard" class="bee-topnav-pill {% if page == 'dashboard' %}active{% endif %}">
-                        <span>📊</span> <span>Dashboard</span>
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        <span>Dashboard</span>
                     </a>
                     <a href="/imprimir" class="bee-topnav-pill {% if page == 'imprimir' %}active{% endif %}">
-                        <span>🖨️</span> <span>Impressão</span>
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        <span>Impressão</span>
                     </a>
-                    <a href="/atendimento" class="bee-topnav-pill {% if page == 'atendimento' %}active{% endif %}">
-                        <span>💬</span> <span>WhatsApp</span>
-                    </a>
+                    <a href="/atendimento" class="bee-topnav-pill {% if page == 'atendimento' %}active{% endif %} flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                        <span>WhatsApp</span>
+                        <span id="top-wa-ping-container" class="hidden items-center gap-1 shrink-0 ml-1">
+                            <span class="relative flex h-2 w-2">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-yellow-400"></span>
+                            </span>
+                            <span id="top-wa-unread-badge" class="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-yellow-400 text-black">0</span>
+                        </span>
                     </a>
                     {% if user and user.lower() in ['admin', 'thaissa', 'michel', 'thaissa/michel'] %}
                     <a href="/financeiro" class="bee-topnav-pill bee-topnav-pill-fin {% if page == 'financeiro' %}active{% endif %}">
-                        <span>💰</span> <span>Financeiro</span>
+                        <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Financeiro</span>
                     </a>
                     {% endif %}
                 </nav>
 
                 <div class="bee-topbar-user">
-                    <span class="text-xs text-slate-400">👤 <strong class="text-amber-400 capitalize">{{ user or 'Admin' }}</strong></span>
-                    <a href="/logout" class="bg-rose-600 hover:bg-rose-500 text-white text-xs px-2.5 py-1 rounded-lg font-bold transition">Sair</a>
+                    <span class="text-xs text-zinc-400 flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        <strong class="text-yellow-400 font-bold capitalize">{{ user or 'Admin' }}</strong>
+                    </span>
+                    <a href="/logout" class="bg-rose-600 hover:bg-rose-500 text-white text-xs px-2.5 py-1.5 rounded-lg font-bold transition shadow">Sair</a>
                 </div>
             </div>
         </header>
 
-        <main class="bee-main-content print:h-auto print:overflow-visible print:bg-white print:text-black">
+        <main class="bee-main-content w-full flex-1 overflow-y-auto bg-black text-white print:h-auto print:overflow-visible print:bg-white print:text-black">
             {% block content %}{% endblock %}
         </main>
     </div>
@@ -131,10 +88,12 @@
         <section id="bee-ia-chat-window" class="bee-ia-chat-hidden" aria-label="Janela de Chat Assistente Bee">
             <header class="bee-ia-chat-header">
                 <div class="bee-ia-header-info">
-                    <span class="bee-ia-avatar">🐝</span>
+                    <span class="bee-ia-avatar flex items-center justify-center">
+                        <svg class="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    </span>
                     <div>
                         <strong class="bee-ia-title">Assistente Bee</strong>
-                        <span class="bee-ia-subtitle">● IA Online • Suporte Interno</span>
+                        <span class="bee-ia-subtitle">Online • Suporte Interno</span>
                     </div>
                 </div>
                 <button type="button" id="bee-ia-close-btn" class="bee-ia-close-btn" title="Fechar chat" aria-label="Fechar chat">✕</button>
@@ -142,7 +101,7 @@
 
             <div id="bee-ia-messages" class="bee-ia-messages">
                 <div class="bee-ia-msg bee-ia-msg-bot">
-                    Olá! Sou o <strong>Assistente Bee</strong> 🐝. Como posso ajudar você hoje com pedidos, produtos, orçamentos ou clientes?
+                    Olá! Sou o <strong>Assistente Bee</strong>. Como posso ajudar você hoje com pedidos, produtos, orçamentos ou clientes?
                 </div>
             </div>
 
@@ -159,14 +118,14 @@
             </footer>
         </section>
 
-        <!-- Barra Inferior Direita: Balão Online + Botão Circular do Robô -->
+        <!-- Barra Inferior Direita: Balão Online + Botão Circular Amarelo -->
         <div class="bee-ia-launcher-wrap">
             <div id="bee-ia-status-bubble" class="bee-ia-status-bubble">
                 <span class="bee-ia-dot"></span>
                 <span>IA Online • Posso ajudar?</span>
             </div>
             <button type="button" id="bee-ia-toggle-btn" class="bee-ia-toggle-btn" title="Abrir Assistente Bee" aria-label="Abrir Assistente Bee">
-                🤖
+                <svg class="w-6 h-6 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
             </button>
         </div>
     </div>
@@ -191,14 +150,14 @@
             display: inline-flex;
             align-items: center;
             gap: 7px;
-            background: #0f172a;
-            color: #f8fafc;
-            border: 1px solid rgba(251, 191, 36, 0.45);
+            background: #18181b;
+            color: #ffffff;
+            border: 1px solid rgba(250, 204, 21, 0.45);
             padding: 7px 13px;
             border-radius: 999px;
             font-size: 12px;
             font-weight: 700;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65);
             animation: beeFloatBubble 3s ease-in-out infinite;
             white-space: nowrap;
         }
@@ -207,8 +166,8 @@
             width: 8px;
             height: 8px;
             border-radius: 50%;
-            background: #10b981;
-            box-shadow: 0 0 8px #10b981;
+            background: #facc15;
+            box-shadow: 0 0 8px #facc15;
         }
 
         @keyframes beeFloatBubble {
@@ -217,38 +176,38 @@
         }
 
         .bee-ia-toggle-btn {
-            width: 58px;
-            height: 58px;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
-            border: 2px solid #fbbf24;
-            background: linear-gradient(135deg, #f59e0b, #fbbf24);
-            color: #020617;
-            font-size: 26px;
+            border: 2px solid #facc15;
+            background: #facc15;
+            color: #000000;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            box-shadow: 0 10px 28px rgba(245, 158, 11, 0.35);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 10px 28px rgba(250, 204, 21, 0.35);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
         }
 
         .bee-ia-toggle-btn:hover {
             transform: scale(1.06);
-            box-shadow: 0 12px 32px rgba(245, 158, 11, 0.5);
+            background: #fde047;
+            box-shadow: 0 12px 32px rgba(250, 204, 21, 0.5);
         }
 
         #bee-ia-chat-window {
             position: absolute;
             right: 0;
-            bottom: 72px;
+            bottom: 70px;
             width: 360px;
             max-width: calc(100vw - 32px);
             height: 470px;
             max-height: calc(100vh - 120px);
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 18px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+            background: #121214;
+            border: 1px solid #27272a;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -260,8 +219,8 @@
         }
 
         .bee-ia-chat-header {
-            background: #020617;
-            border-bottom: 1px solid #1e293b;
+            background: #000000;
+            border-bottom: 1px solid #27272a;
             padding: 12px 16px;
             display: flex;
             align-items: center;
@@ -278,32 +237,31 @@
             width: 34px;
             height: 34px;
             border-radius: 10px;
-            background: rgba(251, 191, 36, 0.15);
-            border: 1px solid rgba(251, 191, 36, 0.4);
+            background: rgba(250, 204, 21, 0.15);
+            border: 1px solid rgba(250, 204, 21, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
         }
 
         .bee-ia-title {
             display: block;
-            color: #fbbf24;
+            color: #facc15;
             font-size: 14px;
             font-weight: 800;
         }
 
         .bee-ia-subtitle {
             display: block;
-            color: #34d399;
+            color: #a1a1aa;
             font-size: 11px;
             font-weight: 600;
         }
 
         .bee-ia-close-btn {
             background: transparent;
-            border: 1px solid #334155;
-            color: #94a3b8;
+            border: 1px solid #27272a;
+            color: #a1a1aa;
             width: 28px;
             height: 28px;
             border-radius: 8px;
@@ -314,8 +272,8 @@
         }
 
         .bee-ia-close-btn:hover {
-            background: #1e293b;
-            color: #f8fafc;
+            background: #27272a;
+            color: #ffffff;
         }
 
         .bee-ia-messages {
@@ -325,13 +283,13 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            background: #090d16;
+            background: #09090b;
         }
 
         .bee-ia-msg {
             max-width: 84%;
             padding: 10px 13px;
-            border-radius: 14px;
+            border-radius: 12px;
             font-size: 13px;
             line-height: 1.45;
             word-wrap: break-word;
@@ -340,30 +298,30 @@
 
         .bee-ia-msg-user {
             align-self: flex-end;
-            background: #fbbf24;
-            color: #020617;
-            font-weight: 600;
+            background: #facc15;
+            color: #000000;
+            font-weight: 700;
             border-bottom-right-radius: 4px;
         }
 
         .bee-ia-msg-bot {
             align-self: flex-start;
-            background: #1e293b;
-            color: #f1f5f9;
-            border: 1px solid #334155;
+            background: #18181b;
+            color: #f4f4f5;
+            border: 1px solid #27272a;
             border-bottom-left-radius: 4px;
         }
 
         .bee-ia-msg-typing {
             font-style: italic;
-            color: #fbbf24;
+            color: #facc15;
             opacity: 0.9;
         }
 
         .bee-ia-chat-footer {
             padding: 10px 12px;
-            background: #020617;
-            border-top: 1px solid #1e293b;
+            background: #000000;
+            border-top: 1px solid #27272a;
             display: flex;
             gap: 8px;
             align-items: center;
@@ -371,33 +329,36 @@
 
         .bee-ia-input {
             flex: 1;
-            background: #0f172a;
-            border: 1px solid #334155;
-            color: #f8fafc;
-            border-radius: 10px;
+            background: #000000;
+            border: 1px solid #27272a;
+            color: #ffffff;
+            border-radius: 8px;
             padding: 9px 12px;
             font-size: 13px;
             outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
         }
 
         .bee-ia-input:focus {
-            border-color: #fbbf24;
+            border-color: #facc15;
+            box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.25);
         }
 
         .bee-ia-send-btn {
-            background: #fbbf24;
-            color: #020617;
+            background: #facc15;
+            color: #000000;
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
             padding: 9px 14px;
             font-size: 12px;
-            font-weight: 800;
+            font-weight: 700;
             cursor: pointer;
-            transition: background 0.15s;
+            box-shadow: 0 4px 12px rgba(250, 204, 21, 0.2);
+            transition: background-color 0.15s;
         }
 
         .bee-ia-send-btn:hover:not(:disabled) {
-            background: #fcd34d;
+            background: #fde047;
         }
 
         .bee-ia-send-btn:disabled {
@@ -455,18 +416,15 @@
                 const pergunta = (inputField.value || "").trim();
                 if (!pergunta) return;
 
-                // 1. Adiciona a mensagem do usuário à direita
                 adicionarMensagem(pergunta, "user");
                 inputField.value = "";
                 inputField.disabled = true;
                 sendBtn.disabled = true;
 
-                // 2. Exibe indicador visual "Digitando..."
                 const indicadorDigitando = adicionarMensagem("Digitando...", "bot");
                 indicadorDigitando.classList.add("bee-ia-msg-typing");
 
                 try {
-                    // 3. Faz requisição POST para a rota /consultar-ia
                     const response = await fetch("/consultar-ia", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -478,7 +436,7 @@
 
                     if (!response.ok) {
                         adicionarMensagem(
-                            "Desculpe, o sistema está sobrecarregado agora. Tente novamente em instantes.",
+                            "Não foi possível obter resposta no momento. Tente novamente em instantes.",
                             "bot"
                         );
                         return;
@@ -494,7 +452,7 @@
                 } catch (erro) {
                     indicadorDigitando.remove();
                     adicionarMensagem(
-                        "Desculpe, o sistema está sobrecarregado agora.",
+                        "Erro de comunicação com o servidor local. Tente novamente.",
                         "bot"
                     );
                 } finally {
@@ -516,6 +474,37 @@
             });
         })();
     </script>
-    <script src="/static/js/whatsapp_modal.js?v=2026a"></script>
+    <script src="/static/js/whatsapp_modal.js?v=2026b"></script>
+    <!-- ATUALIZACAO DO PING DE MENSAGENS NAO LIDAS DO WHATSAPP NO MENU -->
+    <script>
+        (function() {
+            async function atualizarPingWhatsApp() {
+                try {
+                    const res = await fetch("/api/whatsapp/contador-nao-lidas");
+                    if (!res.ok) return;
+                    const dados = await res.json();
+                    const total = Number(dados.total_nao_lidas) || 0;
+                    
+                    const topCont = document.getElementById("top-wa-ping-container");
+                    const topBadge = document.getElementById("top-wa-unread-badge");
+                    
+                    if (total > 0) {
+                        if (topCont) {
+                            topCont.classList.remove("hidden");
+                            topCont.classList.add("inline-flex");
+                        }
+                        if (topBadge) topBadge.textContent = total > 99 ? "99+" : `+${total}`;
+                    } else {
+                        if (topCont) {
+                            topCont.classList.add("hidden");
+                            topCont.classList.remove("inline-flex");
+                        }
+                    }
+                } catch (_) {}
+            }
+            atualizarPingWhatsApp();
+            setInterval(atualizarPingWhatsApp, 5000);
+        })();
+    </script>
 </body>
 </html>
