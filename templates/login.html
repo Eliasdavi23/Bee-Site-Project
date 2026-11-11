@@ -1,44 +1,229 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-br" class="h-full bg-black">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Sistema da Empresa</title>
+    <title>Acesso Seguro — Bee Gráfica Digital</title>
     <link rel="icon" type="image/png" href="/static/uploads/logo.png">
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="shortcut icon" type="image/png" href="/static/uploads/logo.png">
+    <link rel="stylesheet" href="/static/css/style.css?v=2026c">
     <script src="/static/js/vendor/tailwind.js"></script>
+    <script src="/static/js/hud.js?v=2026a"></script>
 </head>
-<body class="bg-slate-950 flex items-center justify-center min-h-screen p-4">
+<body class="bg-black flex items-center justify-center min-h-screen p-4 sm:p-6 font-sans text-white antialiased selection:bg-yellow-400 selection:text-black relative overflow-hidden">
 
-    <div class="bg-slate-900 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-slate-800">
-        <div class="text-center mb-8">
-            <img src="/static/uploads/logo.png" alt="Logo" class="mx-auto max-w-[140px] h-auto mb-4 rounded-xl" onerror="this.style.display='none'">
-            <h1 class="text-2xl font-black text-amber-400 tracking-wide uppercase">Acesso ao Sistema</h1>
-            <p class="text-xs text-slate-400 mt-1">Ambiente 100% Local • Digite suas credenciais</p>
-        </div>
+    <!-- Efeito Sutil de Brilho de Fundo em Amarelo Bee -->
+    <div class="absolute -top-32 -left-32 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-32 -right-32 w-96 h-96 bg-yellow-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
+    <main class="w-full max-w-md bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-7 sm:p-9 relative z-10 space-y-6">
+        
+        <!-- Cabeçalho do Card com Logo da Gráfica -->
+        <header class="text-center space-y-3">
+            <div class="inline-flex items-center justify-center p-2 rounded-2xl bg-black border border-zinc-800 shadow-inner">
+                <img src="/static/uploads/logo.png" alt="Logo Bee Gráfica" class="h-12 w-auto object-contain rounded-lg" onerror="this.style.display='none'">
+            </div>
+            <div>
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-zinc-800/80 border border-zinc-700/60 text-[10px] font-black uppercase tracking-wider text-yellow-400 mb-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    Terminal Operacional
+                </div>
+                <h1 class="text-2xl font-black text-white tracking-wide uppercase">Bee Gráfica Digital</h1>
+                <p class="text-xs text-zinc-400 mt-0.5">Identifique-se para acessar os módulos do sistema</p>
+            </div>
+        </header>
+
+        <!-- Alerta de Erro Visual -->
         {% if error %}
-        <div class="bg-rose-950/80 border border-rose-700 text-rose-300 px-4 py-3 rounded-xl mb-6 text-sm text-center font-semibold">
-            {{ error }}
+        <div id="box-alerta-erro" class="flex items-start gap-3 p-3.5 rounded-xl bg-rose-950/80 border border-rose-800/80 text-rose-200 text-xs shadow-lg animate-pulse" role="alert">
+            <svg class="w-5 h-5 text-rose-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <div class="flex-1 leading-relaxed">
+                <strong class="block font-bold text-rose-100">Falha na Autenticação</strong>
+                <span>{{ error }}</span>
+            </div>
         </div>
         {% endif %}
 
-        <form action="/login" method="POST" class="space-y-5">
-            <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase mb-1.5">Usuário / Atendente</label>
-                <input type="text" name="username" required placeholder="Ex: Thaissa, Michel, Davi..." class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 focus:outline-none focus:border-amber-400 transition text-sm">
+        <!-- Seletor Rápido de Atendentes Cadastrados -->
+        {% if usuarios_rapidos and usuarios_rapidos|length > 0 %}
+        <section class="space-y-1.5">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Atalho de Atendentes</span>
+                <span class="text-[10px] text-zinc-500">Clique para preencher</span>
+            </div>
+            <div class="flex flex-wrap gap-1.5">
+                {% for op in usuarios_rapidos %}
+                <button type="button" onclick="selecionarOperador('{{ op }}')" class="btn-operador px-3 py-1.5 rounded-lg bg-black hover:bg-yellow-400 hover:text-black border border-zinc-800 text-xs font-bold text-zinc-300 transition duration-150 cursor-pointer">
+                    {{ op }}
+                </button>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- Formulário Principal de Login -->
+        <form action="/login" method="POST" id="form-login" class="space-y-4" onsubmit="aoSubmeterLogin(event)">
+            <input type="hidden" name="next" value="{{ next or '' }}">
+
+            <!-- Campo Usuário / Atendente -->
+            <div class="space-y-1">
+                <label for="login-username" class="block text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                    Usuário / Atendente
+                </label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-zinc-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                    </span>
+                    <input 
+                        type="text" 
+                        name="username" 
+                        id="login-username" 
+                        required 
+                        autocomplete="username" 
+                        autofocus
+                        value="{{ username or '' }}"
+                        placeholder="Ex: Davi, Thaissa, Michel..." 
+                        class="w-full pl-10 pr-4 py-3 rounded-xl bg-black border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition"
+                    >
+                </div>
             </div>
 
-            <div>
-                <label class="block text-xs font-bold text-slate-400 uppercase mb-1.5">Senha</label>
-                <input type="password" name="password" required placeholder="••••••••" class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 focus:outline-none focus:border-amber-400 transition text-sm">
+            <!-- Campo Senha com Alternador de Visibilidade -->
+            <div class="space-y-1">
+                <label for="login-password" class="block text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                    Senha de Acesso
+                </label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-zinc-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </span>
+                    <input 
+                        type="password" 
+                        name="password" 
+                        id="login-password" 
+                        required 
+                        autocomplete="current-password" 
+                        placeholder="Digite sua senha..." 
+                        class="w-full pl-10 pr-11 py-3 rounded-xl bg-black border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition"
+                    >
+                    <button 
+                        type="button" 
+                        id="btn-toggle-senha"
+                        onclick="alternarVisibilidadeSenha()" 
+                        class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-zinc-400 hover:text-yellow-400 transition cursor-pointer" 
+                        title="Alternar exibição da senha"
+                        tabindex="-1"
+                    >
+                        <svg id="icone-olho-fechado" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        <svg id="icone-olho-aberto" class="w-4 h-4 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
-            <button type="submit" class="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black py-3 rounded-xl shadow-lg transition cursor-pointer">
-                Entrar no Sistema
+            <!-- Opções Extras: Manter Conectado -->
+            <div class="flex items-center justify-between pt-1">
+                <label class="flex items-center gap-2 text-xs text-zinc-300 select-none cursor-pointer">
+                    <input 
+                        type="checkbox" 
+                        name="lembrar" 
+                        value="1" 
+                        checked 
+                        class="w-4 h-4 rounded bg-black border-zinc-700 text-yellow-400 focus:ring-yellow-400 focus:ring-offset-zinc-900 cursor-pointer"
+                    >
+                    <span>Manter conectado neste terminal</span>
+                </label>
+            </div>
+
+            <!-- Botão de Login com Estado Ativo e Carregamento -->
+            <button 
+                type="submit" 
+                id="btn-login-submit"
+                class="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-extrabold py-3.5 rounded-xl shadow-lg shadow-yellow-500/20 transition duration-150 cursor-pointer text-sm tracking-wide uppercase flex items-center justify-center gap-2"
+            >
+                <span id="btn-login-texto">Entrar no Sistema</span>
+                <svg id="btn-login-spinner" class="w-4 h-4 animate-spin hidden" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
             </button>
         </form>
-    </div>
+
+        <!-- Rodapé do Card com Status de Segurança -->
+        <footer class="pt-4 border-t border-zinc-800/80 text-center space-y-1">
+            <p class="text-[11px] text-zinc-500">
+                Ambiente 100% Localhost • Proteção contra força bruta ativa
+            </p>
+            <p class="text-[10px] text-zinc-600 font-mono">
+                BEE GRÁFICA & COMUNICAÇÃO VISUAL
+            </p>
+        </footer>
+
+    </main>
+
+    <!-- Script de Interatividade e Fluidez do Login -->
+    <script>
+        function selecionarOperador(nome) {
+            const inputUser = document.getElementById('login-username');
+            const inputPass = document.getElementById('login-password');
+            if (inputUser) {
+                inputUser.value = nome;
+            }
+            if (inputPass) {
+                inputPass.focus();
+                inputPass.select();
+            }
+        }
+
+        function alternarVisibilidadeSenha() {
+            const inputPass = document.getElementById('login-password');
+            const olhoFechado = document.getElementById('icone-olho-fechado');
+            const olhoAberto = document.getElementById('icone-olho-aberto');
+            if (!inputPass) return;
+
+            if (inputPass.type === 'password') {
+                inputPass.type = 'text';
+                if (olhoFechado) olhoFechado.classList.add('hidden');
+                if (olhoAberto) olhoAberto.classList.remove('hidden');
+            } else {
+                inputPass.type = 'password';
+                if (olhoFechado) olhoFechado.classList.remove('hidden');
+                if (olhoAberto) olhoAberto.classList.add('hidden');
+            }
+        }
+
+        function aoSubmeterLogin(e) {
+            const btn = document.getElementById('btn-login-submit');
+            const txt = document.getElementById('btn-login-texto');
+            const spinner = document.getElementById('btn-login-spinner');
+            if (btn) {
+                btn.disabled = true;
+                btn.classList.add('opacity-80', 'cursor-not-allowed');
+            }
+            if (txt) txt.textContent = 'Autenticando...';
+            if (spinner) spinner.classList.remove('hidden');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputUser = document.getElementById('login-username');
+            const inputPass = document.getElementById('login-password');
+            if (inputUser && !inputUser.value) {
+                inputUser.focus();
+            } else if (inputPass) {
+                inputPass.focus();
+            }
+        });
+    </script>
 
 </body>
 </html>

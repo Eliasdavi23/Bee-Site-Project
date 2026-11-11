@@ -1,3 +1,4 @@
+import re
 import asyncio
 import json
 import pathlib
@@ -66,7 +67,7 @@ def test_fluxo_completo_multiplos_pedidos_com_observacoes_por_item():
     res_cli = criar_cliente(ClienteSchema(
         nome="Gráfica Teste Validação LTDA",
         documento="12.345.678/0001-99",
-        telefone="(11) 98888-7777",
+        telefone="16 997100623",
         email="contato@graficateste.local",
         endereco="Rua Localhost, 100"
     ), user="admin")
@@ -177,11 +178,20 @@ def test_fluxo_completo_multiplos_pedidos_com_observacoes_por_item():
     resp_imp_html = page_imprimir(req, id=pedido_1_id, user="admin").body.decode("utf-8")
     assert "@media print" in resp_imp_html
     assert '[draggable="true"]' in resp_imp_html
+    for el_id in [
+        'id="layout-cupom"', 'id="c-producao"', 'id="c-itens"', 'id="c-emp-razao"', 'id="c-email"',
+        'id="layout-os"', 'id="os-producao"', 'id="os-itens"', 'id="os-empresa-nome"', 'id="os-emp-razao"',
+        'id="layout-orcamento"', 'id="orc-itens"', 'id="orc-valor-pago"', 'id="orc-restante"', 'id="orc-emp-razao"'
+    ]:
+        assert el_id in resp_imp_html, f"Elemento faltante na impressao: {el_id}"
 
     # Limpeza dos registros de teste criados
     deletar_pedido(pedido_1_id, user="admin")
     deletar_pedido(orc_id, user="admin")
     excluir_cliente(cliente_id, user="admin")
+    from controllers.produto_controller import ProdutoController
+    ProdutoController.excluir(prod_cartao["id"])
+    ProdutoController.excluir(prod_banner["id"])
 
 
 def test_pedidos_e_orcamentos_com_numeros_decimais():
@@ -191,7 +201,7 @@ def test_pedidos_e_orcamentos_com_numeros_decimais():
     res_cli = criar_cliente(ClienteSchema(
         nome="Cliente Decimal Teste",
         documento="000.000.000-00",
-        telefone="(11) 90000-0000"
+        telefone="16 997100623"
     ), user="admin")
     cliente_id = res_cli["id"]
 
@@ -279,6 +289,8 @@ def test_pedidos_e_orcamentos_com_numeros_decimais():
     deletar_pedido(ped_id, user="admin")
     deletar_pedido(orc_id, user="admin")
     excluir_cliente(cliente_id, user="admin")
+    from controllers.produto_controller import ProdutoController
+    ProdutoController.excluir(prod["id"])
 
 
 def test_pilares_gemini_e_gitignore():
@@ -300,3 +312,36 @@ def test_pilares_gemini_e_gitignore():
         assert False, "Deveria rejeitar prompt apenas com espaços em branco"
     except Exception:
         pass
+
+
+def test_sistema_hud_unificado_e_zero_emojis():
+    """Valida que o sistema BeeHUD está instalado, sem alertas nativos bloqueantes e com zero emojis."""
+    root = pathlib.Path(__file__).resolve().parent.parent
+    hud_file = root / "static" / "js" / "hud.js"
+    assert hud_file.exists(), "static/js/hud.js deve existir."
+    hud_content = hud_file.read_text(encoding="utf-8")
+    assert "window.BeeHUD = BeeHUD;" in hud_content
+    assert "toast" in hud_content and "confirm" in hud_content and "alert" in hud_content
+
+    base_html = (root / "templates" / "base.html").read_text(encoding="utf-8")
+    assert "static/js/hud.js" in base_html, "base.html deve carregar hud.js no head."
+
+    # Verifica ausência de alert() e confirm() nativos nos scripts de aplicação
+    js_files = list((root / "static" / "js").glob("**/*.js"))
+    for js_p in js_files:
+        if js_p.name == "hud.js" or "vendor" in js_p.parts:
+            continue
+        text = js_p.read_text(encoding="utf-8")
+        assert not re.search(r'(?<!BeeHUD\.)alert\(', text), f"alert() nativo ainda presente em {js_p.name}"
+        assert not re.search(r'(?<!BeeHUD\.)confirm\(', text), f"confirm() nativo ainda presente em {js_p.name}"
+
+    # Valida política estrita de zero emojis nos arquivos de código
+    emoji_pattern = re.compile(r'[\U00010000-\U0010ffff\u2600-\u27bf\u2300-\u23ff\u2b50-\u2b55]', flags=re.UNICODE)
+    for p in list((root / "static" / "js").glob("**/*.js")) + list((root / "templates").glob("**/*.html")):
+        if "vendor" in p.parts:
+            continue
+        for lno, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1):
+            for ch in emoji_pattern.findall(line):
+                if ch in ['\u2715', '\u2716']:
+                    continue
+                assert False, f"Emoji proibido encontrado em {p.name}:{lno}: {ch}"

@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 import logging
 import os
 from pathlib import Path
+import socket
 from typing import AsyncIterator
 
 from fastapi import FastAPI, HTTPException, status
@@ -39,11 +40,18 @@ from routes.dashboard_routes import router as dashboard_router
 from routes.financeiro_routes import router as financeiro_router
 from routes.orcamentos_routes import router as orcamentos_router
 from routes.whatsapp_routes import router as whatsapp_router
+from services import ia_service
 
 logger = logging.getLogger("uvicorn.error")
 
-GEMINI_MODEL_NAME = "gemini-3.8-flash"
-GITIGNORE_REQUIRED_ENTRIES = (".env", "__pycache__/", "venv/")
+GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL") or "gemini-2.5-flash"
+GITIGNORE_REQUIRED_ENTRIES = (
+    ".env",
+    "__pycache__/",
+    "venv/",
+    "whatsapp_bridge/node_modules/",
+    "whatsapp_bridge/auth_info/",
+)
 
 
 # ---------------------------------------------------------------------------
@@ -80,7 +88,7 @@ def garantir_seguranca_gitignore(caminho_raiz: Path | None = None) -> None:
 
 def obter_cliente_gemini():
     """
-    Inicializa o client do Google Gemini lendo exclusivamente GEMINI_API_KEY
+    Inicializa o client do Google Gemini lendo exclusivamente GEMINI_API_KEY ou GOOGLE_API_KEY
     das variáveis de ambiente (nunca hardcoded no código-fonte).
     """
     if genai is None:
@@ -89,7 +97,7 @@ def obter_cliente_gemini():
             detail="O pacote oficial 'google-genai' não está instalado no servidor.",
         )
 
-    api_key = (os.getenv("GEMINI_API_KEY") or "").strip()
+    api_key = (os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY") or "").strip()
     if not api_key:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -99,12 +107,36 @@ def obter_cliente_gemini():
     return genai.Client(api_key=api_key)
 
 
+def obter_ip_rede_local() -> str:
+    """Detecta automaticamente o IPv4 da placa de rede local (ex.: 192.168.x.x)."""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.settimeout(0.5)
+            s.connect(("8.8.8.8", 80))
+            ip = s.getsockname()[0]
+            if ip and not ip.startswith("127."):
+                return ip
+    except Exception:
+        pass
+    try:
+        return socket.gethostbyname(socket.gethostname())
+    except Exception:
+        return "127.0.0.1"
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    """Ciclo de vida da aplicação: protege o .gitignore e inicializa o banco local."""
+    """Ciclo de vida da aplicação: protege o .gitignore, inicializa o banco e exibe o IP da rede local."""
     garantir_seguranca_gitignore()
     init_db()
     app.state.gemini_api_key_loaded = bool((os.getenv("GEMINI_API_KEY") or "").strip())
+    ip_rede = obter_ip_rede_local()
+    app.state.ip_rede_local = ip_rede
+    logger.info("============================================================")
+    logger.info("SISTEMA GRAFICA ONLINE!")
+    logger.info("Acesso neste PC:       http://127.0.0.1:8000")
+    logger.info("Acesso na Rede Local:  http://%s:8000", ip_rede)
+    logger.info("============================================================")
     yield
 
 
@@ -232,5 +264,25 @@ async def gerar_conteudo_gemini(payload: PromptRequest) -> PromptResponse:
     tags=["Inteligência Artificial"],
 )
 async def consultar_ia_widget(payload: ConsultaIARequest) -> PromptResponse:
-    """Rota consumida pelo widget flutuante Assistente Bee no frontend."""
-    return await gerar_conteudo_gemini(PromptRequest(prompt=payload.pergunta))
+    """
+    Rota consumida pelo widget flutuante Assistente Bee no frontend.
+    Se a IA em nuvem estiver configurada e funcional, utiliza o Google Gemini.
+    Caso contrário ou em caso de sobrecarga/instabilidade da rede externa, utiliza o
+    Assistente Local Inteligente para responder com base nos dados reais da gráfica, sem falhar.
+    """
+    if ia_service.ia_configurada():
+        try:
+            return await gerar_conteudo_gemini(PromptRequest(prompt=payload.pergunta))
+        except Exception as exc:
+            logger.warning("Falha ou sobrecarga na IA em nuvem (%s), utilizando Assistente Local", exc.__class__.__name__)
+
+    resposta_local = ia_service.consultar_assistente_local(payload.pergunta)
+    return PromptResponse(modelo="Assistente Local Bee", resposta=resposta_local)
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    ip_local = obter_ip_rede_local()
+    logger.info("Iniciando Uvicorn escutando em todas as interfaces (0.0.0.0:8000)...")
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

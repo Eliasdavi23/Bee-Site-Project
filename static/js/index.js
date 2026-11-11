@@ -188,7 +188,7 @@ async function salvarPedido() {
     const clienteId = document.getElementById('ped-cliente').value;
 
     if (!usuarioNome || !clienteId) {
-        alert("Preencha o Atendente e o Cliente!");
+        BeeHUD.warning("Preencha o Atendente e o Cliente!");
         return;
     }
 
@@ -206,7 +206,7 @@ async function salvarPedido() {
     });
 
     if (produtos.length === 0) {
-        alert("Adicione pelo menos um produto ao pedido.");
+        BeeHUD.warning("Adicione pelo menos um produto ao pedido.");
         return;
     }
 
@@ -227,15 +227,31 @@ async function salvarPedido() {
         produtos
     };
 
-    await api.salvarPedidoAPI(payload);
-    fecharModal();
-    carregarPedidos();
+    try {
+        await api.salvarPedidoAPI(payload);
+        fecharModal();
+        BeeHUD.success("Pedido salvo com sucesso!");
+        carregarPedidos();
+    } catch (err) {
+        BeeHUD.error("Erro ao salvar pedido: " + (err.message || "Erro interno"));
+    }
 }
 
 async function excluirPedido(id) {
-    if (confirm(`Tem certeza que deseja apagar a venda #${id}?`)) {
-        await api.excluirPedidoAPI(id);
-        carregarPedidos();
+    const ok = await BeeHUD.confirm({
+        titulo: "Excluir Venda",
+        mensagem: `Tem certeza que deseja apagar a venda #${id}?`,
+        confirmTexto: "Sim, apagar",
+        tipo: "danger"
+    });
+    if (ok) {
+        try {
+            await api.excluirPedidoAPI(id);
+            BeeHUD.success(`Venda #${id} excluída com sucesso!`);
+            carregarPedidos();
+        } catch (err) {
+            BeeHUD.error("Erro ao excluir venda: " + (err.message || "Erro interno"));
+        }
     }
 }
 
