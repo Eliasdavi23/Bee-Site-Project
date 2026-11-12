@@ -7,13 +7,23 @@ Utiliza ReportLab para renderização rápida e tipografia técnica limpa.
 import io
 import os
 from datetime import datetime
-from reportlab.lib.pagesizes import A4
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, KeepTogether, HRFlowable
-)
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib import colors
-from reportlab.pdfgen import canvas
+
+try:
+    from reportlab.lib.pagesizes import A4
+    from reportlab.platypus import (
+        SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, KeepTogether, HRFlowable
+    )
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib import colors
+    from reportlab.pdfgen import canvas
+    REPORTLAB_INSTALADO = True
+except ImportError:
+    REPORTLAB_INSTALADO = False
+    A4 = None
+    colors = None
+    canvas = None
+    SimpleDocTemplate = Paragraph = Spacer = Table = TableStyle = KeepTogether = HRFlowable = None  # type: ignore[assignment,misc]
+    getSampleStyleSheet = ParagraphStyle = None  # type: ignore[assignment]
 
 DIR_UPLOADS_PDF = os.path.join("static", "uploads", "orcamentos")
 
@@ -23,37 +33,41 @@ def formatar_moeda(valor) -> str:
     return f"R$ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
-class PaginacaoCanvas(canvas.Canvas):
-    """Canvas com duas passagens para calcular o total exato de páginas."""
-    nome_empresa = "BEE GRÁFICA DIGITAL"
+if REPORTLAB_INSTALADO and canvas is not None:
+    class PaginacaoCanvas(canvas.Canvas):
+        """Canvas com duas passagens para calcular o total exato de páginas."""
+        nome_empresa = "BEE GRÁFICA DIGITAL"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._saved_page_states = []
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self._saved_page_states = []
 
-    def showPage(self):
-        self._saved_page_states.append(dict(self.__dict__))
-        self._startPage()
+        def showPage(self):
+            self._saved_page_states.append(dict(self.__dict__))
+            self._startPage()
 
-    def save(self):
-        num_paginas = len(self._saved_page_states)
-        for state in self._saved_page_states:
-            self.__dict__.update(state)
-            self._desenhar_rodape(num_paginas)
-            super().showPage()
-        super().save()
+        def save(self):
+            num_paginas = len(self._saved_page_states)
+            for state in self._saved_page_states:
+                self.__dict__.update(state)
+                self._desenhar_rodape(num_paginas)
+                super().showPage()
+            super().save()
 
-    def _desenhar_rodape(self, total_paginas: int):
-        self.saveState()
-        self.setStrokeColor(colors.HexColor("#E4E4E7"))
-        self.setLineWidth(0.8)
-        self.line(36, 40, 559, 40)
-        self.setFont("Helvetica", 8)
-        self.setFillColor(colors.HexColor("#71717A"))
-        emp_rodape = getattr(self, "nome_empresa", None) or "BEE GRÁFICA & COMUNICAÇÃO VISUAL"
-        self.drawString(36, 27, f"{emp_rodape} • Soluções em Impressão Digital")
-        self.drawRightString(559, 27, f"Página {self._pageNumber} de {total_paginas}")
-        self.restoreState()
+        def _desenhar_rodape(self, total_paginas: int):
+            self.saveState()
+            self.setStrokeColor(colors.HexColor("#E4E4E7"))
+            self.setLineWidth(0.8)
+            self.line(36, 40, 559, 40)
+            self.setFont("Helvetica", 8)
+            self.setFillColor(colors.HexColor("#71717A"))
+            emp_rodape = getattr(self, "nome_empresa", None) or "BEE GRÁFICA & COMUNICAÇÃO VISUAL"
+            self.drawString(36, 27, f"{emp_rodape} • Soluções em Impressão Digital")
+            self.drawRightString(559, 27, f"Página {self._pageNumber} de {total_paginas}")
+            self.restoreState()
+else:
+    class PaginacaoCanvas:  # type: ignore[no-redef]
+        nome_empresa = "BEE GRÁFICA DIGITAL"
 
 
 def obter_dados_empresa_db() -> dict:
@@ -97,6 +111,12 @@ def gerar_pdf_orcamento(orcamento: dict, empresa: dict | None = None) -> bytes:
     Gera o PDF oficial do Orçamento / Proposta Comercial em formato A4.
     Retorna os bytes do arquivo em memória.
     """
+    if not REPORTLAB_INSTALADO or SimpleDocTemplate is None:
+        raise RuntimeError(
+            "O módulo 'reportlab' não está instalado no ambiente Python. "
+            "Execute no terminal: pip install reportlab"
+        )
+
     if empresa is None:
         empresa = orcamento.get("empresa") or obter_dados_empresa_db()
 
@@ -388,6 +408,11 @@ def gerar_pdf_orcamento(orcamento: dict, empresa: dict | None = None) -> bytes:
 
 def salvar_pdf_orcamento_disco(orcamento: dict, empresa: dict | None = None) -> tuple[str, bytes]:
     """Gera e salva o PDF em disco, retornando (url_relativa, bytes)."""
+    if not REPORTLAB_INSTALADO:
+        raise RuntimeError(
+            "O módulo 'reportlab' não está instalado no ambiente Python. "
+            "Execute no terminal: pip install reportlab"
+        )
     os.makedirs(DIR_UPLOADS_PDF, exist_ok=True)
     pdf_bytes = gerar_pdf_orcamento(orcamento, empresa=empresa)
     orc_id = orcamento.get("id") or int(datetime.now().timestamp())

@@ -221,7 +221,10 @@ def baixar_orcamento_pdf(orcamento_id: int, user: str = Depends(auth_required)):
     orcamento = buscar_orcamento_por_id_db(orcamento_id)
     if not orcamento:
         raise HTTPException(status_code=404, detail="Orçamento não encontrado.")
-    pdf_bytes = pdf_service.gerar_pdf_orcamento(orcamento)
+    try:
+        pdf_bytes = pdf_service.gerar_pdf_orcamento(orcamento)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
@@ -248,7 +251,10 @@ def enviar_orcamento_whatsapp_api(
             detail="O cliente não possui um telefone de WhatsApp válido cadastrado. Informe um número com DDD.",
         )
 
-    pdf_bytes = pdf_service.gerar_pdf_orcamento(orcamento)
+    try:
+        pdf_bytes = pdf_service.gerar_pdf_orcamento(orcamento)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
 
     if payload and payload.mensagem and payload.mensagem.strip():
         texto_envio = payload.mensagem.strip()
@@ -303,7 +309,10 @@ def enviar_orcamento_email_api(
     if not dest_email or "@" not in dest_email:
         raise HTTPException(status_code=400, detail="E-mail de destinatário inválido ou não informado no cadastro do cliente.")
 
-    pdf_bytes = pdf_service.gerar_pdf_orcamento(orcamento)
+    try:
+        pdf_bytes = pdf_service.gerar_pdf_orcamento(orcamento)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
 
     import os, smtplib
     from email.message import EmailMessage
