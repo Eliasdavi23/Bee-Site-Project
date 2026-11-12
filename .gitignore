@@ -12,5 +12,8 @@ whatsapp_bridge/log_node.txt
 *.log
 
 # Uploads e imagens do sistema e pedidos
-static/uploads/
-!static/uploads/*/.gitkeep
+static/uploads/*
+!static/uploads/.gitkeep
+!static/uploads/pedidos/
+static/uploads/pedidos/*
+!static/uploads/pedidos/.gitkeep

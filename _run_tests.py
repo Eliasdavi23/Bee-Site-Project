@@ -5,6 +5,7 @@ from tests.test_full_system import (
     test_fluxo_completo_multiplos_pedidos_com_observacoes_por_item,
     test_pedidos_e_orcamentos_com_numeros_decimais,
     test_pilares_gemini_e_gitignore,
+    test_isolamento_imagens_uploads_e_gitignore,
     test_sistema_hud_unificado_e_zero_emojis,
 )
 from tests.test_whatsapp import (
@@ -48,6 +49,7 @@ if __name__ == "__main__":
     test_fluxo_completo_multiplos_pedidos_com_observacoes_por_item()
     test_pedidos_e_orcamentos_com_numeros_decimais()
     test_pilares_gemini_e_gitignore()
+    test_isolamento_imagens_uploads_e_gitignore()
     test_sistema_hud_unificado_e_zero_emojis()
     test_normalizacao_telefone_anti_gorila()
     test_schemas_pydantic_anti_gorila_whatsapp()

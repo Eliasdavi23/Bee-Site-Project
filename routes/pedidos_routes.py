@@ -21,7 +21,7 @@ from services.whatsapp.notificacoes import notificar_mudanca_status
 
 router = APIRouter(prefix="/api/pedidos", tags=["Pedidos"])
 
-UPLOAD_DIR = "static/uploads"
+UPLOAD_DIR = "static/uploads/pedidos"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 

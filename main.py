@@ -51,6 +51,7 @@ GITIGNORE_REQUIRED_ENTRIES = (
     "venv/",
     "whatsapp_bridge/node_modules/",
     "whatsapp_bridge/auth_info/",
+    "static/uploads/*",
 )
 
 
@@ -128,6 +129,8 @@ def obter_ip_rede_local() -> str:
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Ciclo de vida da aplicação: protege o .gitignore, inicializa o banco e exibe o IP da rede local."""
     garantir_seguranca_gitignore()
+    os.makedirs("static/uploads/pedidos", exist_ok=True)
+    os.makedirs("static/img", exist_ok=True)
     init_db()
     app.state.gemini_api_key_loaded = bool((os.getenv("GEMINI_API_KEY") or "").strip())
     ip_rede = obter_ip_rede_local()
@@ -176,6 +179,8 @@ class PromptResponse(BaseModel):
 
 
 garantir_seguranca_gitignore()
+os.makedirs("static/uploads/pedidos", exist_ok=True)
+os.makedirs("static/img", exist_ok=True)
 init_db()
 
 app = FastAPI(

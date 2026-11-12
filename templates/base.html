@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Sistema da Empresa{% endblock %}</title>
-    <link rel="icon" type="image/png" href="/static/uploads/logo.png">
-    <link rel="shortcut icon" type="image/png" href="/static/uploads/logo.png">
+    <link rel="icon" type="image/png" href="/static/img/logo.png">
+    <link rel="shortcut icon" type="image/png" href="/static/img/logo.png">
     <link rel="stylesheet" href="/static/css/style.css?v=2026c">
     <script src="/static/js/vendor/tailwind.js"></script>
     <script src="/static/js/hud.js?v=2026a"></script>
@@ -17,7 +17,7 @@
         <header id="barra-topo-navegacao" class="bee-topbar w-full bg-zinc-900/95 border-b border-zinc-800 backdrop-blur-md no-print print:hidden">
             <div class="bee-topbar-inner">
                 <a href="/pedidos" class="bee-topbar-brand flex items-center gap-2.5 shrink-0 text-decoration-none hover:opacity-90 transition">
-                    <img src="/static/uploads/logo.png" alt="Logo Bee Gráfica" class="h-7 w-auto object-contain rounded-md" onerror="this.style.display='none';">
+                    <img src="/static/img/logo.png" alt="Logo Bee Gráfica" class="h-7 w-auto object-contain rounded-md" onerror="this.src='/static/uploads/logo.png'; this.onerror=function(){this.style.display='none';};">
                     <span class="text-yellow-400 font-black text-sm tracking-wide">BEE GRÁFICA</span>
                 </a>
 

@@ -345,3 +345,50 @@ def test_sistema_hud_unificado_e_zero_emojis():
                 if ch in ['\u2715', '\u2716']:
                     continue
                 assert False, f"Emoji proibido encontrado em {p.name}:{lno}: {ch}"
+
+
+def test_isolamento_imagens_uploads_e_gitignore():
+    """Valida que o diretório de imagens de pedidos é isolado e blindado contra commits no .gitignore."""
+    import subprocess
+    from routes.pedidos_routes import UPLOAD_DIR
+
+    base_dir = pathlib.Path(__file__).resolve().parent.parent
+    assert UPLOAD_DIR == "static/uploads/pedidos"
+
+    upload_dir = base_dir / "static" / "uploads"
+    pedidos_dir = upload_dir / "pedidos"
+    img_dir = base_dir / "static" / "img"
+
+    assert upload_dir.exists(), "Diretório static/uploads deve existir"
+    assert pedidos_dir.exists(), "Diretório static/uploads/pedidos deve existir"
+    assert (upload_dir / ".gitkeep").exists(), "static/uploads/.gitkeep deve existir"
+    assert (pedidos_dir / ".gitkeep").exists(), "static/uploads/pedidos/.gitkeep deve existir"
+    assert (img_dir / "logo.png").exists(), "Logo estático deve existir em static/img/logo.png"
+
+    # Testa se imagens de pedidos são ignoradas pelo Git
+    temp_img = pedidos_dir / "__temp_test_pedido.jpg"
+    temp_img.write_text("dummy-image-content", encoding="utf-8")
+    try:
+        rel_path = str(temp_img.relative_to(base_dir)).replace("\\", "/")
+        res = subprocess.run(
+            ["git", "check-ignore", "-v", rel_path],
+            capture_output=True,
+            text=True,
+            cwd=str(base_dir)
+        )
+        assert res.returncode == 0, f"Imagem de pedido deveria ser ignorada pelo git: {res.stdout}"
+        assert "static/uploads" in res.stdout
+    finally:
+        if temp_img.exists():
+            temp_img.unlink()
+
+    # Valida que .gitkeep é mantido via regra de negação
+    res_keep = subprocess.run(
+        ["git", "check-ignore", "-v", "static/uploads/.gitkeep"],
+        capture_output=True,
+        text=True,
+        cwd=str(base_dir)
+    )
+    if res_keep.returncode == 0:
+        assert "!" in res_keep.stdout, ".gitkeep deve ser incluído via regra de negação (!)"
+
